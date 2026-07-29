@@ -2,11 +2,12 @@ import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, Info, ScanLine, Save, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
-import { Button, Card, Field, Input, SectionTitle, Segmented, Select } from '../../components/ui'
+import { Button, Card, Field, Input, SectionTitle, Segmented, Select, cn } from '../../components/ui'
 import { brandsFor } from '../../data/brands'
 import { estimateListPrice } from '../../lib/valuation'
 import { vehicleProfile } from '../../lib/vehicleProfile'
 import { fileToDataUrl } from '../../lib/fileStore'
+import { decodeVin } from '../../lib/vin'
 import { formatEur } from '../../lib/format'
 import { askClaudeStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
 import { SYSTEM_REGISTRATION } from '../../lib/ai/prompts'
@@ -155,6 +156,9 @@ export default function VehicleFormScreen() {
   const [scanned, setScanned] = useState<{ filled: ScanField[]; uncertain: ScanField[]; note?: string } | null>(null)
 
   const brands = useMemo(() => brandsFor(form.kind), [form.kind])
+
+  // Was sich aus der Fahrgestellnummer offline ablesen lässt
+  const vinInfo = useMemo(() => decodeVin(form.vin ?? ''), [form.vin])
 
   // Vorschau der Wertschätzung: zeigt sofort, was die eingegebenen Daten bewirken
   const preview = useMemo(() => {
@@ -470,6 +474,57 @@ export default function VehicleFormScreen() {
                 className="font-mono text-[13px]"
               />
             </Field>
+
+            {vinInfo && (vinInfo.manufacturer || vinInfo.problems.length > 0) && (
+              <div
+                className={cn(
+                  'rounded-[14px] border px-3.5 py-3',
+                  vinInfo.problems.length > 0
+                    ? 'border-warn/30 bg-warn/8'
+                    : 'border-brand-blue/25 bg-brand-blue/8',
+                )}
+              >
+                {vinInfo.problems.map((p) => (
+                  <p key={p} className="mb-1.5 flex gap-2 text-[12.5px] leading-relaxed text-warn">
+                    <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                    {p}
+                  </p>
+                ))}
+
+                {vinInfo.manufacturer && (
+                  <>
+                    <p className="text-[12.5px] leading-relaxed text-ink-muted">
+                      Aus der Nummer gelesen:{' '}
+                      <strong className="text-ink">{vinInfo.manufacturer}</strong>
+                      {vinInfo.country && `, gebaut in ${vinInfo.country}`}
+                      {vinInfo.modelYear && (
+                        <>
+                          {' '}
+                          · Modelljahr wahrscheinlich{' '}
+                          <strong className="text-ink">{vinInfo.modelYear}</strong>
+                        </>
+                      )}
+                    </p>
+                    {vinInfo.manufacturer !== form.make && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2.5"
+                        onClick={() => set('make', vinInfo.manufacturer!)}
+                      >
+                        Marke „{vinInfo.manufacturer}" übernehmen
+                      </Button>
+                    )}
+                    <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+                      Hersteller und Land stehen genormt in den ersten drei Stellen, das Modelljahr
+                      in der zehnten – manche Hersteller nutzen sie allerdings anders. Baureihe und
+                      Werk lassen sich daraus nicht ableiten; danach fragst Du am besten den
+                      Assistenten.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
             <Field label="Kennzeichen" hint={hintFor('plate')}>
               <Input
                 value={form.plate ?? ''}

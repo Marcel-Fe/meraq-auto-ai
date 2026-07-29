@@ -67,11 +67,14 @@ Erledigt ✅
    Erinnerung je Termin. Bewusst kein Web-Push: Das bräuchte einen Server, den es hier
    nicht gibt. Rein km-basierte Positionen bleiben außen vor — für sie gibt es kein Datum.
 
+6. **VIN-Decoder** ✅ — `src/lib/vin.ts` löst die Fahrgestellnummer offline auf: Hersteller
+   und Land aus den ersten drei Stellen (WMI), Modelljahr aus der zehnten. Das Formular
+   zeigt das Ergebnis unter dem VIN-Feld an, die Marke lässt sich mit einem Tipp übernehmen,
+   und Tippfehler (I, O, Q, falsche Länge) werden benannt. Das Werk (elfte Stelle) bleibt
+   bewusst außen vor — dafür gibt es keine öffentliche Norm, jede Zuordnung wäre geraten.
+
 Als Nächstes, nach Nutzen pro Aufwand:
 
-6. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
-   damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)
-   sind genormt und lassen sich offline auflösen.
 7. **Fehlercode-Datenbank erweitern** — aktuell 18 genormte Codes; herstellerspezifische
    Codes ergänzen (die KI fängt sie bereits ab).
 8. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
