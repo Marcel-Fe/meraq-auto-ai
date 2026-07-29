@@ -47,6 +47,8 @@ interface AppState {
   // Wartung
   completeMaintenance: (itemId: string) => void
   updateMaintenance: (itemId: string, patch: Partial<MaintenanceItem>) => void
+  addMaintenance: (item: Omit<MaintenanceItem, 'id' | 'custom'>) => void
+  removeMaintenance: (itemId: string) => void
 
   // Aktivitäten
   addActivity: (a: Omit<ActivityEntry, 'id'>) => void
@@ -98,20 +100,32 @@ function seedState() {
 /**
  * Baut den Wartungsplan für ein Fahrzeug neu auf und übernimmt dabei, was der
  * Nutzer bereits erledigt hat – erkannt an der Wartungsart bzw. der Bezeichnung.
+ *
+ * Selbst angelegte Positionen bleiben unangetastet, selbst angepasste Intervalle
+ * behalten Vorrang: Der Neuaufbau soll den Plan an das Fahrzeug anpassen, nicht
+ * die Arbeit des Nutzers löschen.
  */
 function mergeMaintenance(existing: MaintenanceItem[], vehicle: Vehicle): MaintenanceItem[] {
-  return defaultMaintenance(vehicle).map((fresh) => {
+  const own = existing.filter((m) => m.custom)
+  const standard = existing.filter((m) => !m.custom)
+
+  const rebuilt = defaultMaintenance(vehicle).map((fresh) => {
     const previous =
-      existing.find((m) => m.kind === fresh.kind && m.label === fresh.label) ??
-      existing.find((m) => m.kind === fresh.kind)
+      standard.find((m) => m.kind === fresh.kind && m.label === fresh.label) ??
+      standard.find((m) => m.kind === fresh.kind)
     if (!previous) return fresh
     return {
       ...fresh,
       lastDoneKm: previous.lastDoneKm ?? fresh.lastDoneKm,
       lastDoneAt: previous.lastDoneAt ?? fresh.lastDoneAt,
       note: previous.note,
+      intervalKm: previous.edited ? previous.intervalKm : fresh.intervalKm,
+      intervalMonths: previous.edited ? previous.intervalMonths : fresh.intervalMonths,
+      edited: previous.edited,
     }
   })
+
+  return [...rebuilt, ...own]
 }
 
 const defaultSettings: Settings = {
@@ -233,6 +247,12 @@ export const useAppStore = create<AppState>()(
 
       updateMaintenance: (itemId, patch) =>
         set((s) => ({ maintenance: s.maintenance.map((m) => (m.id === itemId ? { ...m, ...patch } : m)) })),
+
+      addMaintenance: (item) =>
+        set((s) => ({ maintenance: [...s.maintenance, { ...item, id: uid(), custom: true }] })),
+
+      removeMaintenance: (itemId) =>
+        set((s) => ({ maintenance: s.maintenance.filter((m) => m.id !== itemId) })),
 
       addActivity: (a) => set((s) => ({ activities: [{ ...a, id: uid() }, ...s.activities] })),
 
@@ -378,7 +398,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 3,
+      version: 4,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -397,6 +417,20 @@ export const useAppStore = create<AppState>()(
         // v2 → v3: Kostenvoranschläge kamen dazu
         if (from < 3) {
           state = { ...state, quotes: state.quotes ?? [] }
+        }
+
+        // v3 → v4: Wartungspositionen sind anpassbar. Bestehende Positionen stammen
+        // alle aus dem Standardplan – sie gelten deshalb als weder selbst angelegt
+        // noch angepasst, damit ein späterer Neuaufbau sie aktualisieren darf.
+        if (from < 4) {
+          state = {
+            ...state,
+            maintenance: (state.maintenance ?? []).map((m) => ({
+              ...m,
+              custom: m.custom ?? false,
+              edited: m.edited ?? false,
+            })),
+          }
         }
 
         return state

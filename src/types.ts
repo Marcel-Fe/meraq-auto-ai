@@ -112,6 +112,10 @@ export interface MaintenanceItem {
   lastDoneKm?: number
   lastDoneAt?: string
   note?: string
+  /** Vom Nutzer selbst angelegte Position – wird beim Neuaufbau des Plans nicht ersetzt */
+  custom?: boolean
+  /** Intervall wurde vom Nutzer angepasst – hat Vorrang vor den Standardwerten */
+  edited?: boolean
 }
 
 export interface ActivityEntry {

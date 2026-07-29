@@ -105,6 +105,19 @@ export function defaultMaintenance(vehicle: Vehicle): MaintenanceItem[] {
   }))
 }
 
+/**
+ * Wartungsarten, die zu diesem Fahrzeug passen – für eigene Positionen des Nutzers.
+ *
+ * Abgeleitet aus dem Standardplan, damit die Liste automatisch fahrzeuggerecht
+ * bleibt: Ein E-Auto bekommt so auch hier keinen Ölwechsel angeboten.
+ * Die Hauptuntersuchung kommt dazu, weil sie jedes zugelassene Fahrzeug betrifft,
+ * im Standardplan aber bewusst nicht auftaucht (Termin steht am Fahrzeug).
+ */
+export function kindsForVehicle(vehicle: Vehicle): MaintenanceKind[] {
+  const fromPlan = defaultMaintenance(vehicle).map((m) => m.kind)
+  return [...new Set<MaintenanceKind>([...fromPlan, 'hu'])]
+}
+
 function monthsAgoIso(months: number) {
   const d = new Date()
   d.setMonth(d.getMonth() - months)
