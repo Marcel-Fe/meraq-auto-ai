@@ -6,6 +6,8 @@ import type {
   ChatThread,
   DiagnosisEntry,
   MaintenanceItem,
+  Quote,
+  QuoteItem,
   Vehicle,
   VehicleDocument,
 } from '../types'
@@ -30,6 +32,7 @@ interface AppState {
   activities: ActivityEntry[]
   diagnoses: DiagnosisEntry[]
   documents: VehicleDocument[]
+  quotes: Quote[]
   threads: ChatThread[]
   activeThreadId: string | null
   settings: Settings
@@ -58,6 +61,14 @@ interface AppState {
   updateDocument: (id: string, patch: Partial<VehicleDocument>) => void
   removeDocument: (id: string) => void
 
+  // Kostenvoranschläge
+  createQuote: (vehicleId: string, hourlyRateEur: number) => string
+  addQuoteItem: (quoteId: string, item: Omit<QuoteItem, 'id'>) => void
+  updateQuoteItem: (quoteId: string, itemId: string, patch: Partial<QuoteItem>) => void
+  removeQuoteItem: (quoteId: string, itemId: string) => void
+  updateQuote: (quoteId: string, patch: Partial<Quote>) => void
+  removeQuote: (quoteId: string) => void
+
   // Chat
   newThread: () => string
   setActiveThread: (id: string) => void
@@ -78,6 +89,7 @@ function seedState() {
     activities: demoActivities(demoVehicle.id),
     diagnoses: demoDiagnoses(demoVehicle.id),
     documents: [] as VehicleDocument[],
+    quotes: [] as Quote[],
     threads: [] as ChatThread[],
     activeThreadId: null,
   }
@@ -167,6 +179,7 @@ export const useAppStore = create<AppState>()(
             activities: s.activities.filter((a) => a.vehicleId !== id),
             diagnoses: s.diagnoses.filter((d) => d.vehicleId !== id),
             documents: s.documents.filter((d) => d.vehicleId !== id),
+            quotes: s.quotes.filter((q) => q.vehicleId !== id),
           }
         }),
 
@@ -271,6 +284,47 @@ export const useAppStore = create<AppState>()(
 
       removeDocument: (id) => set((s) => ({ documents: s.documents.filter((d) => d.id !== id) })),
 
+      createQuote: (vehicleId, hourlyRateEur) => {
+        const quote: Quote = {
+          id: uid(),
+          vehicleId,
+          title: 'Kostenvoranschlag',
+          createdAt: todayIso(),
+          hourlyRateEur,
+          items: [],
+        }
+        set((s) => ({ quotes: [quote, ...s.quotes] }))
+        return quote.id
+      },
+
+      addQuoteItem: (quoteId, item) =>
+        set((s) => ({
+          quotes: s.quotes.map((q) =>
+            q.id === quoteId ? { ...q, items: [...q.items, { ...item, id: uid() }] } : q,
+          ),
+        })),
+
+      updateQuoteItem: (quoteId, itemId, patch) =>
+        set((s) => ({
+          quotes: s.quotes.map((q) =>
+            q.id === quoteId
+              ? { ...q, items: q.items.map((i) => (i.id === itemId ? { ...i, ...patch } : i)) }
+              : q,
+          ),
+        })),
+
+      removeQuoteItem: (quoteId, itemId) =>
+        set((s) => ({
+          quotes: s.quotes.map((q) =>
+            q.id === quoteId ? { ...q, items: q.items.filter((i) => i.id !== itemId) } : q,
+          ),
+        })),
+
+      updateQuote: (quoteId, patch) =>
+        set((s) => ({ quotes: s.quotes.map((q) => (q.id === quoteId ? { ...q, ...patch } : q)) })),
+
+      removeQuote: (quoteId) => set((s) => ({ quotes: s.quotes.filter((q) => q.id !== quoteId) })),
+
       newThread: () => {
         const thread: ChatThread = {
           id: uid(),
@@ -324,21 +378,28 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 2,
-      // v1 → v2: der Wartungsplan hängt jetzt am Fahrzeug (Motorrad, Lkw, Elektro …)
-      // und wird für alle bestehenden Fahrzeuge neu aufgebaut. Erledigte Stände bleiben.
+      version: 3,
       migrate: (persisted, from) => {
-        const state = persisted as AppState
-        if (from >= 2 || !state?.vehicles) return state
-        return {
-          ...state,
-          maintenance: state.vehicles.flatMap((v) =>
-            mergeMaintenance(
-              (state.maintenance ?? []).filter((m) => m.vehicleId === v.id),
-              v,
+        let state = persisted as AppState
+        if (!state?.vehicles) return state
+
+        // v1 → v2: der Wartungsplan hängt jetzt am Fahrzeug (Motorrad, Lkw, Elektro …)
+        // und wird für alle bestehenden Fahrzeuge neu aufgebaut. Erledigte Stände bleiben.
+        if (from < 2) {
+          state = {
+            ...state,
+            maintenance: state.vehicles.flatMap((v) =>
+              mergeMaintenance((state.maintenance ?? []).filter((m) => m.vehicleId === v.id), v),
             ),
-          ),
+          }
         }
+
+        // v2 → v3: Kostenvoranschläge kamen dazu
+        if (from < 3) {
+          state = { ...state, quotes: state.quotes ?? [] }
+        }
+
+        return state
       },
       // Streamende Nachrichten nicht als "pending" speichern – sonst hängen sie nach Reload
       partialize: (s) => ({

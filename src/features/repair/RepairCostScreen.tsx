@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calculator, MapPin, Search, Wrench } from 'lucide-react'
+import { Calculator, FileSpreadsheet, MapPin, Search, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Button, Card, EstimateNote, Input, SectionTitle, Segmented, Sheet } from '../../components/ui'
 import { HOURLY_RATES, repairJobsFor } from '../../data/parts'
@@ -126,11 +126,18 @@ export default function RepairCostScreen() {
           zwei Kostenvoranschläge.
         </EstimateNote>
 
-        <Link to="/workshops">
-          <Button variant="outline" full icon={<MapPin size={17} />}>
-            Werkstätten in der Nähe
-          </Button>
-        </Link>
+        <div className="grid gap-2.5">
+          <Link to="/quote">
+            <Button full icon={<FileSpreadsheet size={17} />}>
+              Kostenvoranschlag zusammenstellen
+            </Button>
+          </Link>
+          <Link to="/workshops">
+            <Button variant="outline" full icon={<MapPin size={17} />}>
+              Werkstätten in der Nähe
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Sheet open={!!selected} onClose={() => setSelected(null)} title={selected?.name}>

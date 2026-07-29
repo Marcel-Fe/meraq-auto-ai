@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Info, Plus, Sparkles } from 'lucide-react'
+import { ChevronRight, Crosshair, Info, Plus, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, EstimateNote, Segmented, Sheet } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
@@ -65,6 +65,24 @@ export default function ManualScreen() {
       />
 
       <div className="anim-fade-up space-y-5">
+        {/* Der Foto-Weg ist der genauere: das eigene Fahrzeug statt einer Schemazeichnung */}
+        <Link to="/part-finder">
+          <Card className="border-brand-teal/30 transition active:scale-[.99]">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-brand-teal/15 text-brand-teal">
+                <Crosshair size={21} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14.5px] font-semibold">Teil im eigenen Foto finden</span>
+                <span className="block text-[12.5px] text-ink-muted">
+                  Motorraum fotografieren – die KI markiert die Bauteile im Bild
+                </span>
+              </span>
+              <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+            </div>
+          </Card>
+        </Link>
+
         <Segmented
           options={zones.map((z) => ({ value: z.id, label: z.label }))}
           value={zone.id}

@@ -20,6 +20,10 @@
 | Mehr (Versicherung, Steuer, HU, Rückruf, Fahrtenbuch, Hilfe) | `/more` | ✅ |
 | KI-Assistent (Streaming, Bilder, Verlauf) | `/assistant` | ✅ |
 | Einstellungen (API-Schlüssel, Modell, Export) | `/settings` | ✅ |
+| **Teil im Foto finden** (Vision + Marker im eigenen Bild) | `/part-finder` | ✅ |
+| **Gesamtkosten** (Wertverlust, Steuer, Sprit, Wartung) | `/costs` | ✅ |
+| **Kostenvoranschlag** (Positionen, MwSt., Export) | `/quote` | ✅ |
+| **Fahrzeug nachschlagen** (Gebrauchtwagen-Check ohne Anlegen) | `/lookup` | ✅ |
 
 Fahrzeugunabhängigkeit ✅
 - Teile, Reparaturen, Wartungsplan, Anleitungen und Handbuch richten sich nach dem
@@ -40,10 +44,11 @@ Reihenfolge nach Nutzen pro Aufwand:
 
 1. **Wartungsintervalle anpassbar** — eigene km-/Monatswerte je Position eintragen,
    statt nur die Standardwerte zu nutzen.
-2. **Kostenauswertung** — Kosten pro Kategorie und pro 1.000 km, Jahresvergleich.
-   Die Daten liegen bereits in `ActivityEntry.costEur`.
-3. **Rechnung fotografieren → Aktivität** — die KI liest Betrag, Datum und Leistung aus
-   und legt daraus einen Verlaufseintrag an. Baut auf dem bestehenden Dokument-Auslesen auf.
+2. **Rechnung fotografieren → Aktivität** — die KI liest Betrag, Datum und Leistung aus
+   und legt daraus einen Verlaufseintrag an. Baut auf dem bestehenden Dokument-Auslesen auf
+   und macht die Kostenrechnung von Schätzung zu echter Auswertung.
+3. **Bauteil-Erkennung merken** — erkannte Teile aus `/part-finder` am Fahrzeug speichern,
+   damit man sie später wiederfindet, statt jedes Mal neu zu analysieren.
 4. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
 5. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
    damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)

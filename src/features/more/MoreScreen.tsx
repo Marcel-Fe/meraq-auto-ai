@@ -6,13 +6,17 @@ import {
   Box,
   Calculator,
   CircleHelp,
+  Crosshair,
   Droplet,
+  FileSpreadsheet,
   FileText,
   Gauge,
   HelpCircle,
   MapPin,
+  PiggyBank,
   Receipt,
   RotateCcw,
+  Search,
   Settings,
   Shield,
   ShieldCheck,
@@ -139,6 +143,36 @@ export default function MoreScreen() {
             </Card>
           </section>
         )}
+
+        <section>
+          <SectionTitle title="Werkstatt-Werkzeuge" />
+          <RowGroup>
+            <Row
+              icon={<Crosshair size={17} />}
+              title="Teil im Foto finden"
+              subtitle="Motorraum fotografieren, KI markiert die Bauteile"
+              to="/part-finder"
+            />
+            <Row
+              icon={<PiggyBank size={17} />}
+              title="Was kostet mich das Auto?"
+              subtitle="Wertverlust, Steuer, Sprit und Wartung pro Monat"
+              to="/costs"
+            />
+            <Row
+              icon={<FileSpreadsheet size={17} />}
+              title="Kostenvoranschlag"
+              subtitle="Positionen zusammenstellen wie in der Werkstatt"
+              to="/quote"
+            />
+            <Row
+              icon={<Search size={17} />}
+              title="Fahrzeug nachschlagen"
+              subtitle="Gebrauchtwagen prüfen, ohne ihn anzulegen"
+              to="/lookup"
+            />
+          </RowGroup>
+        </section>
 
         <section>
           <SectionTitle title="Alle Bereiche" />

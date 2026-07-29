@@ -7,12 +7,16 @@ import {
   Box,
   Calculator,
   Car,
+  Crosshair,
   Droplet,
+  FileSpreadsheet,
   FileText,
   Gauge,
   KeyRound,
   MapPin,
+  PiggyBank,
   Receipt,
+  Search,
   ShoppingCart,
   Sparkles,
   Stethoscope,
@@ -35,13 +39,17 @@ import { formatDate, formatEur, formatRelative } from '../../lib/format'
 import { hasApiKey } from '../../lib/ai/client'
 
 const QUICK_ACTIONS = [
-  { icon: <Activity size={22} />, label: 'Diagnose', to: '/diagnosis', accent: 'teal' as const },
-  { icon: <Wrench size={22} />, label: 'Wartung', to: '/maintenance', accent: 'blue' as const },
-  { icon: <Box size={22} />, label: '3D Handbuch', to: '/manual', accent: 'violet' as const },
-  { icon: <BookOpen size={22} />, label: 'Anleitungen', to: '/guides', accent: 'teal' as const },
+  { icon: <Crosshair size={22} />, label: 'Teil im Foto', to: '/part-finder', accent: 'teal' as const },
+  { icon: <Activity size={22} />, label: 'Diagnose', to: '/diagnosis', accent: 'blue' as const },
+  { icon: <Wrench size={22} />, label: 'Wartung', to: '/maintenance', accent: 'violet' as const },
+  { icon: <Box size={22} />, label: 'Handbuch', to: '/manual', accent: 'teal' as const },
+  { icon: <BookOpen size={22} />, label: 'Anleitungen', to: '/guides', accent: 'blue' as const },
   { icon: <TrendingUp size={22} />, label: 'Marktwert', to: '/value', accent: 'green' as const },
   { icon: <ShoppingCart size={22} />, label: 'Teile & Preise', to: '/parts', accent: 'amber' as const },
   { icon: <Calculator size={22} />, label: 'Reparaturkosten', to: '/repair-costs', accent: 'violet' as const },
+  { icon: <PiggyBank size={22} />, label: 'Was es kostet', to: '/costs', accent: 'green' as const },
+  { icon: <Search size={22} />, label: 'Nachschlagen', to: '/lookup', accent: 'teal' as const },
+  { icon: <FileSpreadsheet size={22} />, label: 'Voranschlag', to: '/quote', accent: 'amber' as const },
   { icon: <MapPin size={22} />, label: 'Werkstatt', to: '/workshops', accent: 'blue' as const },
 ]
 

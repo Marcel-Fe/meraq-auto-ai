@@ -58,6 +58,10 @@ Kilometerstand und Antrieb reichen — den Rest kannst Du später ergänzen.
 | **Dokumente** | Fahrzeugschein, Rechnungen, HU-Bericht fotografieren; KI liest sie aus |
 | **Werkstatt** | Liste mit Entfernung über Deinen Standort |
 | **KI-Assistent** | Chat mit Fahrzeugkontext, Fotos analysieren, Antworten in Echtzeit |
+| **Teil im Foto finden** | Motorraum fotografieren → die KI markiert die Bauteile direkt im Bild und erklärt jedes |
+| **Was kostet mich das Auto?** | Wertverlust, Kfz-Steuer, Sprit, Wartung, Versicherung — pro Monat und pro Kilometer |
+| **Kostenvoranschlag** | Positionen zusammenstellen wie in der Werkstatt: Arbeitszeit, Teile, MwSt., Export |
+| **Fahrzeug nachschlagen** | Gebrauchtwagen prüfen ohne ihn anzulegen: Wert, Unterhalt, Schwachstellen, Kaufcheck |
 
 ## Ehrlich gesagt
 
@@ -71,6 +75,11 @@ Manches lässt sich im Browser nicht echt umsetzen — das ist in der App übera
   Anbieterverträge. Die App zeigt Dir stattdessen jede Rechnung offen — nutze die Zahlen
   als Orientierung, nicht als Verhandlungsgrundlage.
 - **Die Werkstätten sind Beispieldaten**, keine echten Betriebe.
+- **Die Marker im Foto sind ungefähre Positionen.** Die KI schätzt sie aus dem Bild und trifft
+  nicht jeden Punkt genau — verlass Dich auf die Beschreibung „Im Bild erkennst Du es so".
+
+Genau ist dagegen die **Kfz-Steuer**: die wird nach § 9 Kraftfahrzeugsteuergesetz gerechnet,
+sobald Hubraum und CO₂-Wert aus dem Fahrzeugschein eingetragen sind.
 
 ## Deine Daten
 

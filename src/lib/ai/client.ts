@@ -83,6 +83,55 @@ export async function askClaude(opts: AskOptions): Promise<string> {
     .join('')
 }
 
+/**
+ * Antwort in einer festen Struktur anfordern.
+ *
+ * Umgesetzt über einen erzwungenen Werkzeugaufruf: Das Modell muss das Werkzeug
+ * benutzen und liefert damit garantiert gültiges JSON nach dem übergebenen Schema –
+ * zuverlässiger, als JSON aus einem Fließtext zu parsen.
+ */
+export async function askClaudeStructured<T>(opts: {
+  system: string
+  context?: string
+  messages: Anthropic.MessageParam[]
+  toolName: string
+  toolDescription: string
+  schema: Anthropic.Tool.InputSchema
+  maxTokens?: number
+  signal?: AbortSignal
+}): Promise<T> {
+  const client = await createClient()
+  const model = useAppStore.getState().settings.model
+
+  const system: Anthropic.TextBlockParam[] = [{ type: 'text', text: opts.system }]
+  if (opts.context) system.push({ type: 'text', text: opts.context })
+  system[system.length - 1].cache_control = { type: 'ephemeral' }
+
+  const response = await client.messages.create(
+    {
+      model,
+      max_tokens: opts.maxTokens ?? 2048,
+      system,
+      messages: opts.messages,
+      tools: [
+        {
+          name: opts.toolName,
+          description: opts.toolDescription,
+          input_schema: opts.schema,
+        },
+      ],
+      tool_choice: { type: 'tool', name: opts.toolName },
+    },
+    { signal: opts.signal },
+  )
+
+  const block = response.content.find((b) => b.type === 'tool_use')
+  if (!block || block.type !== 'tool_use') {
+    throw new Error('Die KI hat keine strukturierte Antwort geliefert.')
+  }
+  return block.input as T
+}
+
 /** Baut einen Nutzer-Turn, optional mit Bild */
 export function userMessage(text: string, imageDataUrl?: string): Anthropic.MessageParam {
   if (!imageDataUrl) return { role: 'user', content: text }

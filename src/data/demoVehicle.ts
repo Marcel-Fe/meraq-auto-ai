@@ -24,6 +24,12 @@ export const demoVehicle: Vehicle = {
   listPriceNew: 46_500,
   color: 'Saphirschwarz',
   createdAt: '2024-01-15T10:00:00.000Z',
+  // Angaben aus dem Fahrzeugschein – damit die Steuer- und Kostenrechnung
+  // im Beispiel sofort echte Zahlen liefert statt nur Platzhalter
+  displacementCcm: 1_995,
+  co2GramPerKm: 124,
+  consumption: 5.4,
+  annualKm: 15_000,
 }
 
 export function demoActivities(vehicleId: string): ActivityEntry[] {

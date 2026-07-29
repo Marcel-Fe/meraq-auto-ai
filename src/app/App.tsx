@@ -23,6 +23,10 @@ const Documents = lazy(() => import('../features/documents/DocumentsScreen'))
 const Workshops = lazy(() => import('../features/workshops/WorkshopsScreen'))
 const More = lazy(() => import('../features/more/MoreScreen'))
 const Settings = lazy(() => import('../features/settings/SettingsScreen'))
+const PartFinder = lazy(() => import('../features/partfinder/PartFinderScreen'))
+const Lookup = lazy(() => import('../features/lookup/LookupScreen'))
+const Costs = lazy(() => import('../features/costs/CostsScreen'))
+const QuoteBuilder = lazy(() => import('../features/quote/QuoteScreen'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -68,6 +72,10 @@ export function App() {
                     <Route path="/diagnosis" element={<Diagnosis />} />
                     <Route path="/maintenance" element={<Maintenance />} />
                     <Route path="/manual" element={<Manual />} />
+                    <Route path="/part-finder" element={<PartFinder />} />
+                    <Route path="/lookup" element={<Lookup />} />
+                    <Route path="/costs" element={<Costs />} />
+                    <Route path="/quote" element={<QuoteBuilder />} />
                     <Route path="/guides" element={<Guides />} />
                     <Route path="/guides/:id" element={<GuideDetail />} />
                     <Route path="/value" element={<Value />} />

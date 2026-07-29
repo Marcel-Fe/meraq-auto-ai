@@ -32,6 +32,54 @@ export interface Vehicle {
   photo?: string
   color?: string
   createdAt: string
+
+  // --- Angaben aus dem Fahrzeugschein, für Steuer- und Kostenrechnung ---
+  /** Hubraum in cm³ (Feld P.1) – Basis der Kfz-Steuer */
+  displacementCcm?: number
+  /** CO₂-Ausstoß in g/km (Feld V.7) – Basis des CO₂-Anteils der Kfz-Steuer */
+  co2GramPerKm?: number
+  /** Verbrauch in l/100 km bzw. kWh/100 km */
+  consumption?: number
+  /** Geschätzte Jahresfahrleistung in km – Basis der Kostenrechnung */
+  annualKm?: number
+  /** Versicherungsbeitrag pro Jahr in Euro, falls bekannt */
+  insuranceYearlyEur?: number
+}
+
+/** Ein Posten in einem selbst zusammengestellten Kostenvoranschlag */
+export interface QuoteItem {
+  id: string
+  /** Verweis auf die Reparaturposition, falls aus der Liste übernommen */
+  jobId?: string
+  name: string
+  quantity: number
+  laborHours: number
+  partsMinEur: number
+  partsMaxEur: number
+}
+
+export interface Quote {
+  id: string
+  vehicleId: string
+  title: string
+  createdAt: string
+  hourlyRateEur: number
+  items: QuoteItem[]
+}
+
+/** Ein von der KI im Foto erkanntes Bauteil */
+export interface DetectedPart {
+  label: string
+  /** Position in Prozent der Bildbreite bzw. -höhe */
+  x: number
+  y: number
+  /** Wofür das Teil da ist */
+  fn: string
+  /** Woran man es im Bild erkennt */
+  looksLike: string
+  /** Typische Probleme, kurz */
+  problems?: string[]
+  confidence: 'sicher' | 'wahrscheinlich' | 'unsicher'
 }
 
 export type MaintenanceKind =
