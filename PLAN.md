@@ -35,29 +35,39 @@ Fahrzeugunabhängigkeit ✅
 Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
-- Smoke-Test über alle 17 Screens im iPhone-Format (`npm run test:smoke`)
+- Smoke-Test über alle 21 Screens im iPhone-Format (`npm run test:smoke`)
 - Erststart-Bundle 98 kB gzip; KI-SDK und Charts werden erst bei Bedarf geladen
 
 ## Phase 2 — Tiefe
 
-Reihenfolge nach Nutzen pro Aufwand:
+Erledigt ✅
 
-1. **Wartungsintervalle anpassbar** — eigene km-/Monatswerte je Position eintragen,
-   statt nur die Standardwerte zu nutzen.
-2. **Rechnung fotografieren → Aktivität** — die KI liest Betrag, Datum und Leistung aus
-   und legt daraus einen Verlaufseintrag an. Baut auf dem bestehenden Dokument-Auslesen auf
-   und macht die Kostenrechnung von Schätzung zu echter Auswertung.
-3. **Bauteil-Erkennung merken** — erkannte Teile aus `/part-finder` am Fahrzeug speichern,
+1. **Wartungsintervalle anpassbar** ✅ — Intervall in km und Monaten, letzte Erledigung
+   und Notiz sind im Wartungs-Sheet editierbar. Eigene Positionen lassen sich anlegen
+   und löschen; die Auswahl der Wartungsart bleibt fahrzeuggerecht (`kindsForVehicle`).
+   Selbst angelegte und angepasste Positionen überleben einen Neuaufbau des Plans
+   (`custom`/`edited` in `MaintenanceItem`, Store-Version 4).
+2. **Rechnung fotografieren → Aktivität** ✅ — Rechnungen und Serviceheft-Einträge werden
+   strukturiert ausgelesen (`SYSTEM_INVOICE`) und als Formular zur Prüfung angeboten.
+   Nach Bestätigung entsteht ein Verlaufseintrag mit Betrag und Kilometerstand, passende
+   Wartungspositionen werden auf Datum und km-Stand des Belegs gesetzt. Damit rechnet
+   `/costs` mit echten Zahlen statt mit einer Schätzung.
+3. **Fahrzeugschein fotografieren → Fahrzeug anlegen** ✅ — `SYSTEM_REGISTRATION` liest die
+   genormten Felder (B, D.1–D.3, E, J, P.1–P.3, V.7) und füllt das Formular vor; unsicher
+   gelesene Werte werden benannt und am Feld markiert. Hubraum und CO₂ sind jetzt
+   eingebbar — ohne sie ließ sich die Kfz-Steuer gar nicht berechnen.
+
+Als Nächstes, nach Nutzen pro Aufwand:
+
+4. **Bauteil-Erkennung merken** — erkannte Teile aus `/part-finder` am Fahrzeug speichern,
    damit man sie später wiederfindet, statt jedes Mal neu zu analysieren.
-4. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
-5. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
+5. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
+6. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
    damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)
    sind genormt und lassen sich offline auflösen.
-5b. **Fahrzeugschein fotografieren → Fahrzeug anlegen** — die KI liest Marke, Typ,
-   Leistung, Kraftstoff und Erstzulassung aus. Das Dokument-Auslesen gibt es bereits.
-6. **Fehlercode-Datenbank erweitern** — aktuell 18 genormte Codes; herstellerspezifische
+7. **Fehlercode-Datenbank erweitern** — aktuell 18 genormte Codes; herstellerspezifische
    Codes ergänzen (die KI fängt sie bereits ab).
-7. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
+8. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
 
 ## Phase 3 — Ausbau
 
