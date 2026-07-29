@@ -1,4 +1,5 @@
-import type { Guide } from '../types'
+import type { Guide, Vehicle } from '../types'
+import { vehicleTraits, type VehicleTraits } from '../lib/vehicleProfile'
 
 /**
  * Allgemeingültige Wartungsanleitungen. Bewusst fahrzeugübergreifend formuliert –
@@ -155,6 +156,43 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
+    id: 'chain',
+    title: 'Antriebskette spannen und pflegen',
+    category: 'Antrieb',
+    durationMin: 20,
+    difficulty: 'einfach',
+    tools: ['Montageständer oder Seitenständer', 'Maulschlüssel', 'Zollstock', 'Kettenbürste'],
+    parts: ['Kettenspray oder Kettenfett', 'Kettenreiniger'],
+    safety:
+      'Niemals bei laufendem Motor an der Kette arbeiten – Finger können eingezogen werden. Motorrad sicher abstellen.',
+    steps: [
+      {
+        title: 'Durchhang messen',
+        text: 'Kette in der Mitte zwischen den Rädern nach oben und unten drücken. Der zulässige Durchhang steht im Handbuch, meist 25–40 mm.',
+      },
+      {
+        title: 'Achsmutter lösen',
+        text: 'Hinterachsmutter lockern, ohne sie herauszudrehen.',
+      },
+      {
+        title: 'Spannen',
+        text: 'Kettenspanner links und rechts gleichmäßig verstellen. Die Markierungen auf beiden Seiten müssen übereinstimmen, sonst läuft das Rad schief.',
+      },
+      {
+        title: 'Festziehen',
+        text: 'Achsmutter mit dem vorgeschriebenen Drehmoment anziehen und den Durchhang erneut prüfen.',
+      },
+      {
+        title: 'Reinigen und schmieren',
+        text: 'Kette mit Reiniger und Bürste säubern, trocknen lassen, dann bei handwarmer Kette dünn von innen einsprühen.',
+      },
+      {
+        title: 'Verschleiß prüfen',
+        text: 'Lässt sich die Kette am hinteren Kettenrad mehr als einen halben Zahn abheben, ist der Kettensatz fällig – dann immer Kette, Ritzel und Kettenrad zusammen tauschen.',
+      },
+    ],
+  },
+  {
     id: 'jump-start',
     title: 'Starthilfe geben',
     category: 'Elektrik',
@@ -172,4 +210,27 @@ export const GUIDES: Guide[] = [
   },
 ]
 
-export const GUIDE_CATEGORIES = ['Alle', 'Motor', 'Bremsen', 'Elektrik', 'Innenraum', 'Fahrwerk'] as const
+export const GUIDE_CATEGORIES = ['Alle', 'Motor', 'Bremsen', 'Elektrik', 'Innenraum', 'Fahrwerk', 'Antrieb'] as const
+
+/**
+ * Welche Anleitung zu welchem Fahrzeug passt. Ohne Eintrag gilt sie für alle –
+ * ein Bremsenwechsel ist überall ähnlich, ein Zündkerzenwechsel nicht.
+ */
+const GUIDE_REQUIREMENTS: Record<string, (t: VehicleTraits) => boolean> = {
+  'oil-change': (t) => t.hasEngineOil,
+  'air-filter': (t) => t.hasCombustionEngine,
+  'spark-plugs': (t) => t.hasSparkPlugs,
+  coolant: (t) => t.hasCoolant,
+  'cabin-filter': (t) => t.hasAirConditioning,
+  wipers: (t) => t.wheelCount > 2,
+  chain: (t) => t.hasChainDrive,
+}
+
+/** Anleitungen, die zum aktiven Fahrzeug passen */
+export function guidesFor(vehicle: Vehicle): Guide[] {
+  const traits = vehicleTraits(vehicle)
+  return GUIDES.filter((g) => {
+    const requirement = GUIDE_REQUIREMENTS[g.id]
+    return !requirement || requirement(traits)
+  })
+}

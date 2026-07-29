@@ -1,4 +1,5 @@
-import type { ManualZone } from '../types'
+import type { ManualZone, Vehicle } from '../types'
+import { vehicleTraits } from '../lib/vehicleProfile'
 
 /**
  * Bauteil-Explorer. Statt eines echten 3D-Modells (dafür gäbe es keine frei
@@ -192,3 +193,101 @@ export const MANUAL_ZONES: ManualZone[] = [
     ],
   },
 ]
+
+/** Bauteile, die es nur bei bestimmten Fahrzeugen gibt */
+const HOTSPOT_REQUIREMENTS: Record<string, (v: Vehicle) => boolean> = {
+  'oil-cap': (v) => vehicleTraits(v).hasEngineOil,
+  'oil-filter-housing': (v) => vehicleTraits(v).hasEngineOil,
+  'air-filter-box': (v) => vehicleTraits(v).hasCombustionEngine,
+  belt: (v) => vehicleTraits(v).hasCombustionEngine,
+  turbo: (v) => vehicleTraits(v).hasCombustionEngine,
+  'coolant-tank': (v) => vehicleTraits(v).hasCoolant,
+  exhaust: (v) => vehicleTraits(v).hasCombustionEngine,
+  'cabin-filter': (v) => vehicleTraits(v).hasAirConditioning,
+  'ac-vent': (v) => vehicleTraits(v).hasAirConditioning,
+  seatbelt: (v) => v.kind !== 'motorcycle',
+  'fuse-box': (v) => v.kind !== 'motorcycle',
+}
+
+/** Elektro-spezifische Bauteile, die es bei Verbrennern nicht gibt */
+const ELECTRIC_HOTSPOTS = [
+  {
+    id: 'hv-battery',
+    label: 'Hochvoltbatterie',
+    x: 50,
+    y: 62,
+    fn: 'Der Energiespeicher des Fahrzeugs, meist im Unterboden. Seine Restkapazität bestimmt Reichweite und Wiederverkaufswert.',
+    problems: [
+      'Kapazitätsverlust über die Jahre',
+      'Häufiges Schnellladen beschleunigt die Alterung',
+      'Beschädigung am Unterboden ist immer ein Werkstattfall',
+    ],
+    interval: 'Zustandsprüfung alle 2 Jahre',
+  },
+  {
+    id: 'charging-port',
+    label: 'Ladeanschluss',
+    x: 78,
+    y: 40,
+    fn: 'Schnittstelle zum Laden – Typ 2 für Wechselstrom, CCS zusätzlich für Gleichstrom-Schnellladen.',
+    problems: ['Verriegelung klemmt', 'Kontakte verschmutzt', 'Ladeklappe friert im Winter fest'],
+  },
+  {
+    id: 'inverter',
+    label: 'Leistungselektronik',
+    x: 32,
+    y: 34,
+    fn: 'Wandelt den Gleichstrom der Batterie in Wechselstrom für den Motor um und steuert die Rekuperation.',
+    problems: ['Kühlkreislauf undicht', 'Fehler im Antriebsstrang nur per Diagnose auslesbar'],
+  },
+]
+
+/**
+ * Handbuch-Zonen für ein konkretes Fahrzeug.
+ * Ein Motorrad hat keinen Innenraum im Auto-Sinne, ein E-Auto keinen Ölfilter –
+ * deshalb werden Zonen und Bauteile gefiltert statt pauschal angezeigt.
+ */
+export function manualZonesFor(vehicle: Vehicle): ManualZone[] {
+  const traits = vehicleTraits(vehicle)
+  const isBike = vehicle.kind === 'motorcycle'
+
+  return MANUAL_ZONES.filter((zone) => !(isBike && zone.id === 'interior'))
+    .map((zone) => {
+      let hotspots = zone.hotspots.filter((h) => {
+        const requirement = HOTSPOT_REQUIREMENTS[h.id]
+        return !requirement || requirement(vehicle)
+      })
+
+      if (zone.id === 'engine') {
+        if (traits.hasHighVoltageBattery) hotspots = [...hotspots, ...ELECTRIC_HOTSPOTS]
+        if (traits.hasChainDrive) {
+          hotspots = [
+            ...hotspots,
+            {
+              id: 'chain',
+              label: 'Antriebskette',
+              x: 62,
+              y: 78,
+              fn: 'Überträgt die Kraft vom Getriebe auf das Hinterrad. Sie ist das Verschleißteil mit dem kürzesten Wartungsintervall.',
+              problems: ['Zu locker oder zu straff gespannt', 'Trockene Glieder', 'Verschlissenes Kettenrad'],
+              interval: 'alle 1.000 km spannen und fetten',
+            },
+          ]
+        }
+      }
+
+      return { ...zone, label: zoneLabel(zone.id, vehicle), hotspots }
+    })
+    .filter((zone) => zone.hotspots.length > 0)
+}
+
+function zoneLabel(zoneId: string, vehicle: Vehicle) {
+  const traits = vehicleTraits(vehicle)
+  if (zoneId === 'engine') {
+    if (vehicle.kind === 'motorcycle') return 'Antrieb'
+    if (traits.hasHighVoltageBattery && !traits.hasCombustionEngine) return 'Antrieb & Batterie'
+    return 'Motorraum'
+  }
+  if (zoneId === 'chassis' && vehicle.kind === 'motorcycle') return 'Fahrwerk & Bremsen'
+  return zoneId === 'interior' ? 'Innenraum' : 'Fahrwerk'
+}

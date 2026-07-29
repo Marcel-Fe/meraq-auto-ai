@@ -46,6 +46,11 @@ export type MaintenanceKind =
   | 'tires'
   | 'battery'
   | 'hu'
+  | 'chain'
+  | 'valve-clearance'
+  | 'coolant'
+  | 'dpf'
+  | 'hv-battery'
 
 export interface MaintenanceItem {
   id: string

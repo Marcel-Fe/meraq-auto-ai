@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save } from 'lucide-react'
+import { Info, Save } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Button, Card, Field, Input, SectionTitle, Segmented, Select } from '../../components/ui'
+import { brandsFor } from '../../data/brands'
+import { estimateListPrice } from '../../lib/valuation'
+import { vehicleProfile } from '../../lib/vehicleProfile'
+import { formatEur } from '../../lib/format'
 import { useAppStore } from '../../store/useAppStore'
 import type { Condition, FuelType, Transmission, Vehicle, VehicleKind } from '../../types'
 
@@ -54,6 +58,20 @@ export default function VehicleFormScreen() {
   })
   const [error, setError] = useState('')
 
+  const brands = useMemo(() => brandsFor(form.kind), [form.kind])
+
+  // Vorschau der Wertschätzung: zeigt sofort, was die eingegebenen Daten bewirken
+  const preview = useMemo(() => {
+    if (!form.make.trim() || !form.model.trim() || form.year < 1900) return null
+    const draft: Vehicle = {
+      ...form,
+      id: 'preview',
+      createdAt: new Date().toISOString(),
+      mileageUpdatedAt: new Date().toISOString(),
+    }
+    return { profile: vehicleProfile(draft), listPrice: estimateListPrice(draft) }
+  }, [form])
+
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
@@ -96,10 +114,26 @@ export default function VehicleFormScreen() {
           <Card className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Marke *">
-                <Input value={form.make} onChange={(e) => set('make', e.target.value)} placeholder="BMW" />
+                {/* Vorschlagsliste, aber freie Eingabe – auch Nischenmarken sollen gehen */}
+                <Input
+                  value={form.make}
+                  onChange={(e) => set('make', e.target.value)}
+                  placeholder="z. B. Volkswagen"
+                  list="marken-liste"
+                  autoComplete="off"
+                />
+                <datalist id="marken-liste">
+                  {brands.map((b) => (
+                    <option key={b} value={b} />
+                  ))}
+                </datalist>
               </Field>
               <Field label="Modell *">
-                <Input value={form.model} onChange={(e) => set('model', e.target.value)} placeholder="320d" />
+                <Input
+                  value={form.model}
+                  onChange={(e) => set('model', e.target.value)}
+                  placeholder="z. B. Golf"
+                />
               </Field>
             </div>
             <Field label="Variante" hint="optional, z. B. G20 Limousine">
@@ -230,11 +264,34 @@ export default function VehicleFormScreen() {
                 inputMode="numeric"
                 value={form.listPriceNew ?? ''}
                 onChange={(e) => set('listPriceNew', e.target.value ? Number(e.target.value) : undefined)}
-                placeholder="z. B. 46500"
+                placeholder={preview ? String(preview.listPrice) : 'z. B. 32000'}
               />
             </Field>
           </Card>
         </section>
+
+        {preview && (
+          <Card>
+            <div className="flex items-start gap-2.5">
+              <Info size={16} className="mt-0.5 shrink-0 text-brand-blue" />
+              <div className="min-w-0 text-[12.5px] leading-relaxed text-ink-muted">
+                <p>
+                  So rechnet die App mit diesem Fahrzeug: <strong className="text-ink">{preview.profile.sizeLabel}</strong>,{' '}
+                  <strong className="text-ink">{preview.profile.brandLabel}</strong>.
+                  Teilepreise ×{preview.profile.partsFactor.toFixed(2)}, Arbeitszeiten ×
+                  {preview.profile.laborFactor.toFixed(2)} gegenüber einem Kompaktwagen.
+                </p>
+                {!form.listPriceNew && (
+                  <p className="mt-2">
+                    Ohne Neupreis rechnet die Wertschätzung mit geschätzten{' '}
+                    <strong className="text-ink">{formatEur(preview.listPrice)}</strong>. Trägst Du
+                    den echten Neupreis ein, wird der Marktwert deutlich genauer.
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {error && (
           <p className="rounded-xl bg-danger/12 px-3.5 py-3 text-[13px] text-danger">

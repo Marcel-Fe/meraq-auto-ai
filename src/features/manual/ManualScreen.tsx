@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Info, Plus, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, EstimateNote, Segmented, Sheet } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
-import { MANUAL_ZONES } from '../../data/manual'
+import { manualZonesFor } from '../../data/manual'
 import type { ManualHotspot } from '../../types'
 import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
@@ -13,12 +13,18 @@ import { ZoneScene } from './ZoneScene'
 
 export default function ManualScreen() {
   const vehicle = useActiveVehicle()
-  const [zoneId, setZoneId] = useState(MANUAL_ZONES[0].id)
+  const [zoneId, setZoneId] = useState<string | null>(null)
   const [spot, setSpot] = useState<ManualHotspot | null>(null)
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const zone = MANUAL_ZONES.find((z) => z.id === zoneId) ?? MANUAL_ZONES[0]
+  // Zonen und Bauteile hängen vom Fahrzeug ab – ein E-Auto hat keinen Ölfilter,
+  // ein Motorrad keinen Innenraum
+  const zones = useMemo(() => (vehicle ? manualZonesFor(vehicle) : []), [vehicle])
+
+  if (!vehicle || zones.length === 0) return null
+
+  const zone = zones.find((z) => z.id === zoneId) ?? zones[0]
 
   const askAi = async (hotspot: ManualHotspot) => {
     if (!hasApiKey()) {
@@ -52,12 +58,16 @@ export default function ManualScreen() {
 
   return (
     <Page>
-      <PageHeader title="Handbuch" subtitle="Bauteile entdecken" backTo="/" />
+      <PageHeader
+        title="Handbuch"
+        subtitle={`${vehicle.make} ${vehicle.model}`}
+        backTo="/"
+      />
 
       <div className="anim-fade-up space-y-5">
         <Segmented
-          options={MANUAL_ZONES.map((z) => ({ value: z.id, label: z.label }))}
-          value={zoneId}
+          options={zones.map((z) => ({ value: z.id, label: z.label }))}
+          value={zone.id}
           onChange={setZoneId}
         />
 

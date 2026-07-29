@@ -27,6 +27,21 @@ gespeichert und direkt an Anthropic geschickt — diese App hat keinen Server, d
 
 Ohne Schlüssel funktioniert alles andere trotzdem — nur die KI-Antworten fehlen.
 
+## Funktioniert mit jedem Fahrzeug
+
+Auto, Motorrad, Transporter, Lkw, Bus oder Wohnmobil — Benziner, Diesel, Hybrid oder Elektro.
+Die App passt sich an, statt für alle dasselbe zu zeigen:
+
+- Ein **E-Auto** bekommt keinen Ölwechsel und keine Zündkerzen angeboten, dafür die
+  Zustandsprüfung der Hochvoltbatterie.
+- Ein **Motorrad** bekommt Kettenpflege und Ventilspiel statt Klimaservice und Scheibenwischer.
+- Ein **Diesel** bekommt Glühkerzen, AGR-Ventil und Partikelfilter statt Zündkerzen.
+- **Teile- und Reparaturpreise** werden auf Dein Fahrzeug umgerechnet — nach Marke
+  (Dacia rechnet anders als Porsche), Fahrzeugart und Leistung. Der Faktor steht offen dabei.
+
+Fahrzeug anlegen: **Fahrzeug → Weiteres Fahrzeug anlegen**. Marke, Modell, Baujahr,
+Kilometerstand und Antrieb reichen — den Rest kannst Du später ergänzen.
+
 ## Was drin ist
 
 | Bereich | Was es kann |

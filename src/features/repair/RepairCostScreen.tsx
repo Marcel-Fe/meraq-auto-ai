@@ -3,25 +3,34 @@ import { Link } from 'react-router-dom'
 import { Calculator, MapPin, Search, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Button, Card, EstimateNote, Input, SectionTitle, Segmented, Sheet } from '../../components/ui'
-import { HOURLY_RATES, REPAIR_JOBS } from '../../data/parts'
+import { HOURLY_RATES, repairJobsFor } from '../../data/parts'
 import { formatEur, formatRange } from '../../lib/format'
-import { useAppStore } from '../../store/useAppStore'
+import { vehicleProfile } from '../../lib/vehicleProfile'
+import { useActiveVehicle, useAppStore } from '../../store/useAppStore'
 import type { RepairJob } from '../../types'
 
 export default function RepairCostScreen() {
+  const vehicle = useActiveVehicle()
   const { settings, updateSettings } = useAppStore()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<RepairJob | null>(null)
 
   const rate = settings.hourlyRateEur
 
+  // Positionen und Preise hängen vom Fahrzeug ab – ein Lkw-Bremsenwechsel
+  // kostet ein Vielfaches eines Kleinwagens, ein E-Auto hat keine Zündkerzen
+  const jobs = useMemo(() => (vehicle ? repairJobsFor(vehicle) : []), [vehicle])
+  const profile = useMemo(() => (vehicle ? vehicleProfile(vehicle) : null), [vehicle])
+
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return REPAIR_JOBS
-    return REPAIR_JOBS.filter(
+    if (!q) return jobs
+    return jobs.filter(
       (j) => j.name.toLowerCase().includes(q) || j.category.toLowerCase().includes(q),
     )
-  }, [query])
+  }, [jobs, query])
+
+  if (!vehicle) return null
 
   const calc = (job: RepairJob) => {
     const labor = job.laborHours * rate
@@ -34,7 +43,11 @@ export default function RepairCostScreen() {
 
   return (
     <Page>
-      <PageHeader title="Reparaturkosten" backTo="/" />
+      <PageHeader
+        title="Reparaturkosten"
+        subtitle={`${vehicle.make} ${vehicle.model}`}
+        backTo="/"
+      />
 
       <div className="anim-fade-up space-y-5">
         <Card>
@@ -101,9 +114,16 @@ export default function RepairCostScreen() {
         </section>
 
         <EstimateNote>
-          Gerechnet wird: Ersatzteil-Spanne + (Arbeitszeit × Stundensatz). Die Arbeitswerte sind übliche
-          Richtwerte, keine herstellerspezifischen Vorgabezeiten. Ein echtes Angebot bekommst Du nur von
-          einer Werkstatt – hol Dir für größere Arbeiten immer zwei Kostenvoranschläge.
+          Gerechnet wird: Ersatzteil-Spanne + (Arbeitszeit × Stundensatz).
+          {profile && (
+            <>
+              {' '}Beides ist auf Dein Fahrzeug umgerechnet ({profile.sizeLabel}, {profile.brandLabel}):
+              Teile ×{profile.partsFactor.toFixed(2)}, Arbeitszeit ×{profile.laborFactor.toFixed(2)}.
+            </>
+          )}{' '}
+          Die Arbeitswerte sind übliche Richtwerte, keine herstellerspezifischen Vorgabezeiten. Ein
+          echtes Angebot bekommst Du nur von einer Werkstatt – hol Dir für größere Arbeiten immer
+          zwei Kostenvoranschläge.
         </EstimateNote>
 
         <Link to="/workshops">
@@ -155,6 +175,13 @@ export default function RepairCostScreen() {
                         Die Spanne kommt von der Teilequalität: der untere Wert entspricht guten
                         Aftermarket-Teilen, der obere Originalteilen vom Hersteller. Bei
                         sicherheitsrelevanten Bauteilen lohnt sich der Aufpreis.
+                        {selected.note && (
+                          <>
+                            <br />
+                            <br />
+                            {selected.note}
+                          </>
+                        )}
                       </p>
                     </div>
                   </Card>

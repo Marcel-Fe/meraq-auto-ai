@@ -1,4 +1,5 @@
 import type { Condition, Vehicle } from '../types'
+import { vehicleProfile } from './vehicleProfile'
 
 /**
  * Transparente Wertschätzung.
@@ -43,20 +44,34 @@ const CONDITION_FACTOR: Record<Condition, number> = {
 /** Erwartete Jahresfahrleistung als Referenz für die km-Korrektur */
 export const REFERENCE_KM_PER_YEAR = 15_000
 
-/** Grober Neupreis, falls der Nutzer keinen gepflegt hat */
+/**
+ * Grober Neupreis, falls der Nutzer keinen gepflegt hat.
+ * Berücksichtigt Marke (Einstiegs- bis Luxusmarke) und Fahrzeugart, damit ein
+ * Dacia nicht wie ein Porsche gerechnet wird.
+ */
 export function estimateListPrice(v: Vehicle): number {
   if (v.listPriceNew && v.listPriceNew > 0) return v.listPriceNew
-  const byKind: Record<Vehicle['kind'], number> = {
-    car: 260,
-    motorcycle: 120,
-    van: 300,
-    truck: 500,
-    bus: 480,
-    camper: 420,
+
+  const { pricePerKw } = vehicleProfile(v)
+  const minKw: Record<Vehicle['kind'], number> = {
+    car: 50,
+    motorcycle: 20,
+    van: 70,
+    truck: 200,
+    bus: 180,
+    camper: 90,
   }
-  // Neupreis grob über die Leistung: Euro pro kW, je Fahrzeugart
-  const base = byKind[v.kind] * Math.max(v.powerKw, 40)
-  return Math.round(base / 500) * 500
+  // Grundpreis, den auch ein sehr schwaches Fahrzeug seiner Klasse kostet
+  const floor: Record<Vehicle['kind'], number> = {
+    car: 12_000,
+    motorcycle: 3_500,
+    van: 22_000,
+    truck: 60_000,
+    bus: 70_000,
+    camper: 45_000,
+  }
+  const base = pricePerKw * Math.max(v.powerKw, minKw[v.kind])
+  return Math.round(Math.max(base, floor[v.kind]) / 500) * 500
 }
 
 /** Degressive Wertentwicklung: ~18 % im ersten Jahr, danach ~11 % p. a., Boden bei 12 % */

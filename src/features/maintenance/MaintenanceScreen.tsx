@@ -1,16 +1,20 @@
 import { useMemo, useState } from 'react'
 import {
+  BatteryCharging,
   Check,
+  Circle,
   Droplet,
   Fan,
   Filter,
   Gauge,
+  Link2,
   ShieldCheck,
   Snowflake,
+  Thermometer,
+  Timer,
+  Wind,
   Wrench,
   Zap,
-  Circle,
-  Timer,
 } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, EstimateNote, ProgressBar, SectionTitle, Sheet, cn } from '../../components/ui'
@@ -31,6 +35,11 @@ const ICONS: Record<MaintenanceKind, typeof Wrench> = {
   tires: Circle,
   battery: Zap,
   hu: ShieldCheck,
+  chain: Link2,
+  'valve-clearance': Gauge,
+  coolant: Thermometer,
+  dpf: Wind,
+  'hv-battery': BatteryCharging,
 }
 
 const STATE_TONE = {

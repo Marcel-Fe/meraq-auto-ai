@@ -83,6 +83,25 @@ function seedState() {
   }
 }
 
+/**
+ * Baut den Wartungsplan für ein Fahrzeug neu auf und übernimmt dabei, was der
+ * Nutzer bereits erledigt hat – erkannt an der Wartungsart bzw. der Bezeichnung.
+ */
+function mergeMaintenance(existing: MaintenanceItem[], vehicle: Vehicle): MaintenanceItem[] {
+  return defaultMaintenance(vehicle).map((fresh) => {
+    const previous =
+      existing.find((m) => m.kind === fresh.kind && m.label === fresh.label) ??
+      existing.find((m) => m.kind === fresh.kind)
+    if (!previous) return fresh
+    return {
+      ...fresh,
+      lastDoneKm: previous.lastDoneKm ?? fresh.lastDoneKm,
+      lastDoneAt: previous.lastDoneAt ?? fresh.lastDoneAt,
+      note: previous.note,
+    }
+  })
+}
+
 const defaultSettings: Settings = {
   apiKey: '',
   model: 'claude-sonnet-5',
@@ -113,7 +132,30 @@ export const useAppStore = create<AppState>()(
       },
 
       updateVehicle: (id, patch) =>
-        set((s) => ({ vehicles: s.vehicles.map((v) => (v.id === id ? { ...v, ...patch } : v)) })),
+        set((s) => {
+          const before = s.vehicles.find((v) => v.id === id)
+          const vehicles = s.vehicles.map((v) => (v.id === id ? { ...v, ...patch } : v))
+          const after = vehicles.find((v) => v.id === id)
+          if (!before || !after) return { vehicles }
+
+          // Antriebsart, Fahrzeugart oder Getriebe bestimmen, welche Wartungspositionen
+          // überhaupt existieren. Wird das korrigiert, muss der Plan mitwandern –
+          // sonst behält ein nachträglich als Elektro erfasstes Fahrzeug den Ölwechsel.
+          const relevantChange =
+            (patch.fuel && patch.fuel !== before.fuel) ||
+            (patch.kind && patch.kind !== before.kind) ||
+            (patch.transmission && patch.transmission !== before.transmission)
+
+          if (!relevantChange) return { vehicles }
+
+          return {
+            vehicles,
+            maintenance: [
+              ...s.maintenance.filter((m) => m.vehicleId !== id),
+              ...mergeMaintenance(s.maintenance.filter((m) => m.vehicleId === id), after),
+            ],
+          }
+        }),
 
       removeVehicle: (id) =>
         set((s) => {
@@ -282,7 +324,22 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 1,
+      version: 2,
+      // v1 → v2: der Wartungsplan hängt jetzt am Fahrzeug (Motorrad, Lkw, Elektro …)
+      // und wird für alle bestehenden Fahrzeuge neu aufgebaut. Erledigte Stände bleiben.
+      migrate: (persisted, from) => {
+        const state = persisted as AppState
+        if (from >= 2 || !state?.vehicles) return state
+        return {
+          ...state,
+          maintenance: state.vehicles.flatMap((v) =>
+            mergeMaintenance(
+              (state.maintenance ?? []).filter((m) => m.vehicleId === v.id),
+              v,
+            ),
+          ),
+        }
+      },
       // Streamende Nachrichten nicht als "pending" speichern – sonst hängen sie nach Reload
       partialize: (s) => ({
         ...s,

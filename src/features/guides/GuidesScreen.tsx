@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { BookOpen, Clock, Search, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, EmptyState, EstimateNote, Input, Segmented } from '../../components/ui'
-import { GUIDES, GUIDE_CATEGORIES } from '../../data/guides'
+import { GUIDE_CATEGORIES, guidesFor } from '../../data/guides'
+import { useActiveVehicle } from '../../store/useAppStore'
 
 const DIFFICULTY_TONE = {
   einfach: 'ok',
@@ -12,21 +13,36 @@ const DIFFICULTY_TONE = {
 } as const
 
 export default function GuidesScreen() {
+  const vehicle = useActiveVehicle()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<(typeof GUIDE_CATEGORIES)[number]>('Alle')
 
+  // Nur was zum Fahrzeug passt: einem E-Auto keinen Ölwechsel, einem Diesel keine Zündkerzen
+  const guides = useMemo(() => (vehicle ? guidesFor(vehicle) : []), [vehicle])
+
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return GUIDES.filter(
+    return guides.filter(
       (g) =>
         (category === 'Alle' || g.category === category) &&
         (!q || g.title.toLowerCase().includes(q) || g.category.toLowerCase().includes(q)),
     )
-  }, [query, category])
+  }, [guides, query, category])
+
+  const categories = useMemo(() => {
+    const present = new Set(guides.map((g) => g.category))
+    return GUIDE_CATEGORIES.filter((c) => c === 'Alle' || present.has(c))
+  }, [guides])
+
+  if (!vehicle) return null
 
   return (
     <Page>
-      <PageHeader title="Anleitungen" backTo="/" />
+      <PageHeader
+        title="Anleitungen"
+        subtitle={`${vehicle.make} ${vehicle.model}`}
+        backTo="/"
+      />
 
       <div className="anim-fade-up space-y-4">
         <div className="relative">
@@ -39,7 +55,7 @@ export default function GuidesScreen() {
           />
         </div>
 
-        <Segmented options={GUIDE_CATEGORIES} value={category} onChange={setCategory} />
+        <Segmented options={categories} value={category} onChange={setCategory} />
 
         {list.length === 0 ? (
           <EmptyState

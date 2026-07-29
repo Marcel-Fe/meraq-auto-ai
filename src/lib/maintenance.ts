@@ -1,5 +1,6 @@
 import type { MaintenanceItem, MaintenanceKind, Vehicle } from '../types'
 import { uid } from './format'
+import { vehicleTraits } from './vehicleProfile'
 
 export interface MaintenanceStatus {
   item: MaintenanceItem
@@ -13,29 +14,86 @@ export interface MaintenanceStatus {
   dueLabel: string
 }
 
-/** Standard-Wartungsplan, abhängig von Antriebsart */
-export function defaultMaintenance(vehicle: Vehicle): MaintenanceItem[] {
-  const isElectric = vehicle.fuel === 'Elektro'
-  const base: { kind: MaintenanceKind; label: string; km: number; months: number }[] = [
-    { kind: 'inspection', label: 'Inspektion', km: 30_000, months: 24 },
-    { kind: 'brake-fluid', label: 'Bremsflüssigkeit', km: 0, months: 24 },
-    { kind: 'cabin-filter', label: 'Innenraumfilter', km: 30_000, months: 12 },
-    { kind: 'ac-service', label: 'Klimaservice', km: 0, months: 24 },
-    { kind: 'tires', label: 'Reifen prüfen / wechseln', km: 40_000, months: 6 },
-    { kind: 'battery', label: 'Batterie prüfen', km: 0, months: 24 },
-  ]
+interface PlanEntry {
+  kind: MaintenanceKind
+  label: string
+  km: number
+  months: number
+}
 
-  if (!isElectric) {
-    base.unshift({ kind: 'oil', label: 'Ölwechsel', km: 15_000, months: 12 })
-    base.push({ kind: 'air-filter', label: 'Luftfilter', km: 30_000, months: 24 })
-    if (vehicle.fuel === 'Benzin' || vehicle.fuel === 'Hybrid' || vehicle.fuel === 'Plug-in-Hybrid') {
-      base.push({ kind: 'spark-plugs', label: 'Zündkerzen', km: 60_000, months: 48 })
-    }
-    base.push({ kind: 'timing-belt', label: 'Zahnriemen / Steuerkette prüfen', km: 120_000, months: 96 })
+/**
+ * Wartungsplan passend zum Fahrzeug.
+ *
+ * Ein Motorrad braucht Kettenpflege und Ventilspiel, ein E-Auto weder Öl noch
+ * Zündkerzen, ein Lkw kürzere Intervalle. Deshalb wird der Plan aus den
+ * Fahrzeugeigenschaften zusammengesetzt statt fest vorgegeben.
+ *
+ * Die Intervalle sind übliche Richtwerte – maßgeblich bleibt der Wartungsplan
+ * des Herstellers. Darauf weist der Wartungs-Screen ausdrücklich hin.
+ */
+export function defaultMaintenance(vehicle: Vehicle): MaintenanceItem[] {
+  const t = vehicleTraits(vehicle)
+  const plan: PlanEntry[] = []
+
+  // --- Motor und Antrieb ---
+  if (t.hasEngineOil) {
+    const oilKm =
+      vehicle.kind === 'motorcycle' ? 8_000 : vehicle.kind === 'truck' || vehicle.kind === 'bus' ? 45_000 : 15_000
+    plan.push({ kind: 'oil', label: 'Ölwechsel', km: oilKm, months: 12 })
+  }
+  if (t.hasCombustionEngine) {
+    plan.push({ kind: 'air-filter', label: 'Luftfilter', km: 30_000, months: 24 })
+  }
+  if (t.hasSparkPlugs) {
+    plan.push({ kind: 'spark-plugs', label: 'Zündkerzen', km: 60_000, months: 48 })
+  }
+  if (t.hasDiesel) {
+    plan.push({ kind: 'spark-plugs', label: 'Glühkerzen prüfen', km: 100_000, months: 72 })
+  }
+  if (t.hasTimingBelt) {
+    plan.push({ kind: 'timing-belt', label: 'Steuerkette / Zahnriemen', km: 120_000, months: 96 })
+  }
+  if (t.hasChainDrive) {
+    plan.push({ kind: 'chain', label: 'Antriebskette pflegen', km: 1_000, months: 1 })
+    plan.push({ kind: 'valve-clearance', label: 'Ventilspiel prüfen', km: 20_000, months: 24 })
+  }
+  if (t.hasCoolant) {
+    plan.push({ kind: 'coolant', label: 'Kühlmittel wechseln', km: 0, months: 36 })
+  }
+  if (t.hasParticulateFilter) {
+    plan.push({ kind: 'dpf', label: 'Partikelfilter prüfen', km: 80_000, months: 48 })
   }
 
-  // Startwert: zuletzt erledigt bei einem plausiblen früheren Kilometerstand
-  return base.map(({ kind, label, km, months }) => ({
+  // --- Elektrik ---
+  if (t.hasHighVoltageBattery) {
+    plan.push({ kind: 'hv-battery', label: 'Hochvoltbatterie prüfen', km: 0, months: 24 })
+  }
+  plan.push({ kind: 'battery', label: 'Starterbatterie prüfen', km: 0, months: 24 })
+
+  // --- Bremsen, Fahrwerk, Innenraum ---
+  plan.push({ kind: 'brake-fluid', label: 'Bremsflüssigkeit', km: 0, months: 24 })
+  plan.push({
+    kind: 'tires',
+    label: 'Reifen prüfen',
+    km: vehicle.kind === 'motorcycle' ? 15_000 : 40_000,
+    months: 6,
+  })
+  if (t.hasAirConditioning) {
+    plan.push({ kind: 'cabin-filter', label: 'Innenraumfilter', km: 30_000, months: 12 })
+    plan.push({ kind: 'ac-service', label: 'Klimaservice', km: 0, months: 24 })
+  }
+
+  // --- Inspektion ---
+  const inspectionMonths = vehicle.kind === 'truck' || vehicle.kind === 'bus' ? 12 : 24
+  const inspectionKm =
+    vehicle.kind === 'motorcycle' ? 12_000 : vehicle.kind === 'truck' || vehicle.kind === 'bus' ? 60_000 : 30_000
+  plan.push({ kind: 'inspection', label: 'Inspektion', km: inspectionKm, months: inspectionMonths })
+
+  // Startwerte so setzen, dass der Plan sofort sinnvoll aussieht: die Position gilt
+  // als vor rund 60 % des Intervalls erledigt. Bei sehr kurzen Zeitintervallen
+  // (z. B. Kettenpflege monatlich) wird das Datum auf heute gesetzt – sonst wäre
+  // ein frisch angelegtes Fahrzeug sofort überfällig, was wie ein Fehler wirkt.
+  return plan.map(({ kind, label, km, months }) => ({
     id: uid(),
     vehicleId: vehicle.id,
     kind,
@@ -43,7 +101,7 @@ export function defaultMaintenance(vehicle: Vehicle): MaintenanceItem[] {
     intervalKm: km,
     intervalMonths: months,
     lastDoneKm: km ? Math.max(0, vehicle.mileage - Math.round(km * 0.6)) : undefined,
-    lastDoneAt: monthsAgoIso(Math.round(months * 0.6)),
+    lastDoneAt: monthsAgoIso(months <= 3 ? 0 : Math.round(months * 0.6)),
   }))
 }
 

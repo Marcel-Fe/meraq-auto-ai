@@ -44,6 +44,36 @@ Nutzung im Markup über die generierten Utilities: `text-ink-muted`, `bg-brand-b
 `border-danger/30`. **Nicht** `text-[--color-ink]` — diese Syntax erzeugt in Tailwind v4
 keine Farbe (stiller Fehler, das Element bleibt weiß).
 
+## Fahrzeugunabhängigkeit — das zentrale Prinzip
+
+Die App darf nichts anzeigen, was zum aktiven Fahrzeug nicht passt. Ein E-Auto bekommt
+keinen Ölwechsel angeboten, ein Diesel keine Zündkerzen, ein Motorrad keine Scheibenwischer.
+
+Umgesetzt über zwei Bausteine in [src/lib/vehicleProfile.ts](src/lib/vehicleProfile.ts):
+
+**`vehicleTraits(vehicle)`** — die Ja/Nein-Eigenschaften eines Fahrzeugs
+(`hasEngineOil`, `hasSparkPlugs`, `hasChainDrive`, `hasHighVoltageBattery` …).
+Danach wird gefiltert: Teile, Reparaturpositionen, Wartungsplan, Anleitungen, Handbuch-Bauteile.
+
+**`vehicleProfile(vehicle)`** — die Preisfaktoren.
+Aus Marke (Einstiegs-, Volumen-, Premium-, Luxusmarke), Fahrzeugart und Leistung entstehen
+`partsFactor` und `laborFactor`. Referenz mit Faktor 1,0 ist ein Kompaktwagen einer
+Volumenmarke. Ein Lkw liegt bei etwa ×2,6 bei den Teilen, ein Motorrad bei ×0,72.
+Die Faktoren werden im UI offen genannt, damit die Zahlen nachvollziehbar bleiben.
+
+Daraus folgt für jede Erweiterung:
+- Neue Teile und Reparaturen kommen als **Vorlage mit Basispreis** in `data/parts.ts`,
+  nicht als fester Preis. Die Umrechnung macht `partsFor()` bzw. `repairJobsFor()`.
+- Gilt etwas nur für bestimmte Fahrzeuge, bekommt es ein `requires: (t) => …`.
+- **Keine Teilenummern.** Sie gelten immer nur für eine Baureihe und Motorvariante.
+  Statt zu raten, ermittelt die App sie auf Wunsch per KI über die Fahrgestellnummer.
+- Ändert der Nutzer Antriebsart, Fahrzeugart oder Getriebe, baut der Store den
+  Wartungsplan neu auf und übernimmt die erledigten Stände (`mergeMaintenance`).
+
+Geprüft wird das automatisch: `npm run test:vehicles` legt ein E-Auto, ein Motorrad und
+einen Diesel-Transporter über die Oberfläche an und stellt sicher, dass jeder Screen
+das Richtige zeigt und das Falsche weglässt.
+
 ## Datenmodell
 
 Alle Typen in [src/types.ts](src/types.ts), Zustand in [src/store/useAppStore.ts](src/store/useAppStore.ts).

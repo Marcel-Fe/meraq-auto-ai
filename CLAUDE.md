@@ -37,6 +37,19 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 - Wiederverwendbare Bausteine kommen aus `components/ui` — keine Einzelanfertigungen,
   wenn `Card`, `Row`, `Badge`, `Sheet` oder `Segmented` passen.
 
+### Fahrzeugunabhängigkeit — die wichtigste Regel
+- Nichts anzeigen, was zum aktiven Fahrzeug nicht passt. Ein E-Auto hat keinen Ölwechsel,
+  ein Diesel keine Zündkerzen, ein Motorrad keine Scheibenwischer.
+- Fahrzeugeigenschaften kommen aus `vehicleTraits()` in
+  [src/lib/vehicleProfile.ts](src/lib/vehicleProfile.ts), Preisfaktoren aus `vehicleProfile()`.
+- Neue Teile und Reparaturen als **Vorlage mit Basispreis** eintragen (Referenz: Kompaktwagen
+  einer Volumenmarke). Die Umrechnung übernehmen `partsFor()` und `repairJobsFor()`.
+  Nie feste Preise für ein bestimmtes Modell hinterlegen.
+- Gilt etwas nur für bestimmte Fahrzeuge → `requires: (t) => t.hasDiesel` ergänzen.
+- **Keine Teilenummern erfinden.** Sie gelten nur für eine Baureihe und Motorvariante.
+- Nach jeder Änderung an Teilen, Wartung, Anleitungen oder Handbuch:
+  `npm run test:vehicles` laufen lassen.
+
 ### Daten und Ehrlichkeit
 - **Nie Zahlen erfinden.** Jede Schätzung braucht eine offengelegte Rechnung und einen
   sichtbaren Hinweis (Komponente `EstimateNote`).
@@ -71,14 +84,19 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 ## Prüfen vor jedem Commit
 
 ```bash
-npm run build        # tsc + vite, muss ohne Fehler durchlaufen
-npm run preview      # Server auf http://localhost:4173/meraq-auto-ai/
-npm run test:smoke   # 17 Screens im iPhone-Format, Screenshots in screenshots/
+npm run build          # tsc + vite, muss ohne Fehler durchlaufen
+npm run preview        # Server auf http://localhost:4173/meraq-auto-ai/
+npm run test:smoke     # 17 Screens im iPhone-Format, Screenshots in screenshots/
+npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 ```
 
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz
-des Kilometerstands und das Verhalten ohne API-Schlüssel. Screenshots danach auch ansehen —
-Farbfehler bestehen den Test, sehen aber falsch aus.
+des Kilometerstands und das Verhalten ohne API-Schlüssel.
+
+Der Fahrzeugtest legt drei sehr unterschiedliche Fahrzeuge über das Formular an und stellt
+sicher, dass jeder Screen das Passende zeigt und das Unpassende weglässt.
+
+Screenshots danach auch ansehen — Farbfehler bestehen den Test, sehen aber falsch aus.
 
 ## Deploy
 

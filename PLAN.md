@@ -21,6 +21,13 @@
 | KI-Assistent (Streaming, Bilder, Verlauf) | `/assistant` | ✅ |
 | Einstellungen (API-Schlüssel, Modell, Export) | `/settings` | ✅ |
 
+Fahrzeugunabhängigkeit ✅
+- Teile, Reparaturen, Wartungsplan, Anleitungen und Handbuch richten sich nach dem
+  konkreten Fahrzeug (Antriebsart, Fahrzeugart, Getriebe)
+- Preise skalieren nach Marke, Fahrzeugart und Leistung — der Faktor ist im UI sichtbar
+- Wartungsplan wandert mit, wenn der Nutzer die Antriebsart korrigiert
+- Automatisch geprüft mit E-Auto, Motorrad und Diesel-Transporter (`npm run test:vehicles`)
+
 Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
@@ -39,7 +46,10 @@ Reihenfolge nach Nutzen pro Aufwand:
    und legt daraus einen Verlaufseintrag an. Baut auf dem bestehenden Dokument-Auslesen auf.
 4. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
 5. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
-   damit das Anlegen eines Fahrzeugs schneller geht.
+   damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)
+   sind genormt und lassen sich offline auflösen.
+5b. **Fahrzeugschein fotografieren → Fahrzeug anlegen** — die KI liest Marke, Typ,
+   Leistung, Kraftstoff und Erstzulassung aus. Das Dokument-Auslesen gibt es bereits.
 6. **Fehlercode-Datenbank erweitern** — aktuell 18 genormte Codes; herstellerspezifische
    Codes ergänzen (die KI fängt sie bereits ab).
 7. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
