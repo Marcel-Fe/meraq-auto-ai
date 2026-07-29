@@ -24,6 +24,7 @@
 | **Gesamtkosten** (Wertverlust, Steuer, Sprit, Wartung) | `/costs` | ✅ |
 | **Kostenvoranschlag** (Positionen, MwSt., Export) | `/quote` | ✅ |
 | **Fahrzeug nachschlagen** (Gebrauchtwagen-Check ohne Anlegen) | `/lookup` | ✅ |
+| **Erinnerungen** (Termine als Kalender-Datei) | `/reminders` | ✅ |
 
 Fahrzeugunabhängigkeit ✅
 - Teile, Reparaturen, Wartungsplan, Anleitungen und Handbuch richten sich nach dem
@@ -61,9 +62,13 @@ Erledigt ✅
    IndexedDB, Marker im Store als `PartScan`, Store-Version 5). Gemerkte Aufnahmen stehen
    auf dem Startbildschirm des Teilefinders und öffnen sich ohne neue KI-Anfrage.
 
+5. **Erinnerungen** ✅ — `/reminders` sammelt HU-Termin, zeitliche Wartungsintervalle und
+   Ablaufdaten der Dokumente und exportiert sie als Kalender-Datei (.ics) mit Vorlauf-
+   Erinnerung je Termin. Bewusst kein Web-Push: Das bräuchte einen Server, den es hier
+   nicht gibt. Rein km-basierte Positionen bleiben außen vor — für sie gibt es kein Datum.
+
 Als Nächstes, nach Nutzen pro Aufwand:
 
-5. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
 6. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
    damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)
    sind genormt und lassen sich offline auflösen.

@@ -171,6 +171,12 @@ export default function MoreScreen() {
               subtitle="Gebrauchtwagen prüfen, ohne ihn anzulegen"
               to="/lookup"
             />
+            <Row
+              icon={<BellRing size={17} />}
+              title="Erinnerungen"
+              subtitle="HU, Wartung und Ablaufdaten in Deinen Kalender legen"
+              to="/reminders"
+            />
           </RowGroup>
         </section>
 

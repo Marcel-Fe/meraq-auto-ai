@@ -27,6 +27,7 @@ const PartFinder = lazy(() => import('../features/partfinder/PartFinderScreen'))
 const Lookup = lazy(() => import('../features/lookup/LookupScreen'))
 const Costs = lazy(() => import('../features/costs/CostsScreen'))
 const QuoteBuilder = lazy(() => import('../features/quote/QuoteScreen'))
+const Reminders = lazy(() => import('../features/reminders/RemindersScreen'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -82,6 +83,7 @@ export function App() {
                     <Route path="/parts" element={<Parts />} />
                     <Route path="/repair-costs" element={<RepairCosts />} />
                     <Route path="/documents" element={<Documents />} />
+                    <Route path="/reminders" element={<Reminders />} />
                     <Route path="/workshops" element={<Workshops />} />
                     <Route path="/more" element={<More />} />
                     <Route path="/assistant" element={<Assistant />} />

@@ -29,6 +29,7 @@ const ROUTES = [
   ['parts', '#/parts'],
   ['repair-costs', '#/repair-costs'],
   ['documents', '#/documents'],
+  ['reminders', '#/reminders'],
   ['workshops', '#/workshops'],
   ['more', '#/more'],
   ['assistant', '#/assistant'],
