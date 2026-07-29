@@ -1,0 +1,38 @@
+{
+  "name": "meraq-auto-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "MERAQ AUTO AI – Dein intelligenter Begleiter für alle Fahrzeuge",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview --port 4173",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "lucide-react": "^1.27.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.2",
+    "recharts": "^3.10.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "oxlint": "^1.71.0",
+    "playwright": "^1.62.0",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}
