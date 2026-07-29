@@ -1,13 +1,35 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Camera, Crosshair, ImagePlus, Info, RotateCcw, Search, Sparkles } from 'lucide-react'
+import {
+  Bookmark,
+  BookmarkCheck,
+  Camera,
+  Crosshair,
+  ImagePlus,
+  Info,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
-import { Badge, Button, Card, EstimateNote, Input, cn } from '../../components/ui'
-import { useActiveVehicle } from '../../store/useAppStore'
-import { fileToDataUrl } from '../../lib/fileStore'
+import {
+  Badge,
+  Button,
+  Card,
+  EstimateNote,
+  Input,
+  Row,
+  RowGroup,
+  SectionTitle,
+  cn,
+} from '../../components/ui'
+import { useActiveVehicle, useAppStore, useVehiclePartScans } from '../../store/useAppStore'
+import { deleteFile, fileToDataUrl, getFile, putFile } from '../../lib/fileStore'
+import { formatDate, todayIso, uid } from '../../lib/format'
 import { askClaudeStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
 import { SYSTEM_PART_FINDER, vehicleContext } from '../../lib/ai/prompts'
-import type { DetectedPart } from '../../types'
+import type { DetectedPart, PartScan } from '../../types'
 
 interface FindResult {
   scene: string
@@ -76,6 +98,10 @@ const CONFIDENCE_TONE = {
 
 export default function PartFinderScreen() {
   const vehicle = useActiveVehicle()
+  const scans = useVehiclePartScans()
+  const addPartScan = useAppStore((s) => s.addPartScan)
+  const removePartScan = useAppStore((s) => s.removePartScan)
+
   const fileRef = useRef<HTMLInputElement>(null)
   const [image, setImage] = useState<string>()
   const [result, setResult] = useState<FindResult>()
@@ -83,6 +109,9 @@ export default function PartFinderScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [question, setQuestion] = useState('')
+  /** Gesetzt, wenn gerade eine gemerkte Aufnahme angesehen wird */
+  const [openScan, setOpenScan] = useState<PartScan | null>(null)
+  const [saved, setSaved] = useState(false)
 
   const pick = async (file?: File) => {
     if (!file) return
@@ -90,6 +119,43 @@ export default function PartFinderScreen() {
     setResult(undefined)
     setActive(null)
     setError('')
+    setOpenScan(null)
+    setSaved(false)
+  }
+
+  const save = async () => {
+    if (!vehicle || !result || !image || result.parts.length === 0) return
+    const fileKey = `scan-${uid()}`
+    await putFile(fileKey, image)
+    addPartScan({
+      vehicleId: vehicle.id,
+      date: todayIso(),
+      title: result.scene.slice(0, 70),
+      fileKey,
+      parts: result.parts,
+      note: result.note,
+    })
+    setSaved(true)
+  }
+
+  const openSaved = async (scan: PartScan) => {
+    const file = scan.fileKey ? await getFile(scan.fileKey) : undefined
+    if (!file) {
+      setError('Das Foto zu dieser Aufnahme ist nicht mehr auf dem Gerät. Nimm ein neues auf.')
+      return
+    }
+    setImage(file)
+    setResult({ scene: scan.title, parts: scan.parts, note: scan.note })
+    setActive(null)
+    setError('')
+    setOpenScan(scan)
+    setSaved(true)
+  }
+
+  const removeSaved = async (scan: PartScan) => {
+    if (scan.fileKey) await deleteFile(scan.fileKey)
+    removePartScan(scan.id)
+    reset()
   }
 
   const analyse = async () => {
@@ -133,6 +199,8 @@ export default function PartFinderScreen() {
     setResult(undefined)
     setActive(null)
     setError('')
+    setOpenScan(null)
+    setSaved(false)
   }
 
   return (
@@ -185,6 +253,32 @@ export default function PartFinderScreen() {
                 </Button>
               </div>
             </Card>
+
+            {scans.length > 0 && (
+              <section>
+                <SectionTitle title="Gemerkte Aufnahmen" action={`${scans.length}`} />
+                <RowGroup>
+                  {scans.map((s) => (
+                    <Row
+                      key={s.id}
+                      icon={<Bookmark size={17} />}
+                      title={s.title}
+                      subtitle={`${s.parts.length} ${s.parts.length === 1 ? 'Bauteil' : 'Bauteile'} · ${formatDate(s.date)}`}
+                      onClick={() => openSaved(s)}
+                    />
+                  ))}
+                </RowGroup>
+                <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+                  Gemerkte Aufnahmen öffnen sich sofort – ohne neue KI-Anfrage.
+                </p>
+              </section>
+            )}
+
+            {error && (
+              <Card className="border-danger/30">
+                <p className="text-[13px] text-danger">{error}</p>
+              </Card>
+            )}
 
             <Card>
               <p className="mb-2 text-[13px] font-semibold">So wird das Ergebnis gut</p>
@@ -365,6 +459,18 @@ export default function PartFinderScreen() {
               </Card>
             )}
 
+            {result && result.parts.length > 0 && !openScan && (
+              <Button
+                full
+                variant={saved ? 'outline' : 'primary'}
+                icon={saved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+                onClick={save}
+                disabled={saved}
+              >
+                {saved ? 'Am Fahrzeug gemerkt' : 'Aufnahme am Fahrzeug merken'}
+              </Button>
+            )}
+
             {result && (
               <>
                 <EstimateNote>
@@ -377,6 +483,16 @@ export default function PartFinderScreen() {
                 <Button variant="outline" full icon={<Camera size={17} />} onClick={reset}>
                   Anderes Foto aufnehmen
                 </Button>
+                {openScan && (
+                  <Button
+                    variant="ghost"
+                    full
+                    icon={<Trash2 size={16} />}
+                    onClick={() => removeSaved(openScan)}
+                  >
+                    Aufnahme nicht mehr merken
+                  </Button>
+                )}
               </>
             )}
           </>

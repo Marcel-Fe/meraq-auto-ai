@@ -57,10 +57,12 @@ Erledigt ✅
    gelesene Werte werden benannt und am Feld markiert. Hubraum und CO₂ sind jetzt
    eingebbar — ohne sie ließ sich die Kfz-Steuer gar nicht berechnen.
 
+4. **Bauteil-Erkennung merken** ✅ — eine Erkennung lässt sich am Fahrzeug merken (Foto in
+   IndexedDB, Marker im Store als `PartScan`, Store-Version 5). Gemerkte Aufnahmen stehen
+   auf dem Startbildschirm des Teilefinders und öffnen sich ohne neue KI-Anfrage.
+
 Als Nächstes, nach Nutzen pro Aufwand:
 
-4. **Bauteil-Erkennung merken** — erkannte Teile aus `/part-finder` am Fahrzeug speichern,
-   damit man sie später wiederfindet, statt jedes Mal neu zu analysieren.
 5. **Erinnerungen** — Web-Push oder Kalender-Export (.ics) für HU, Service und Ablaufdaten.
 6. **VIN-Decoder** — aus der Fahrgestellnummer Marke, Baujahr und Werk ableiten,
    damit das Anlegen eines Fahrzeugs schneller geht. Die ersten drei Stellen (WMI)

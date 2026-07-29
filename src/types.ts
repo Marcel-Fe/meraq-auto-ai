@@ -82,6 +82,19 @@ export interface DetectedPart {
   confidence: 'sicher' | 'wahrscheinlich' | 'unsicher'
 }
 
+/** Eine gemerkte Foto-Analyse aus dem Teilefinder */
+export interface PartScan {
+  id: string
+  vehicleId: string
+  date: string
+  /** Kurzbeschreibung der Aufnahme – stammt aus der Szenenbeschreibung der KI */
+  title: string
+  /** Foto als Data-URL, liegt in IndexedDB */
+  fileKey?: string
+  parts: DetectedPart[]
+  note?: string
+}
+
 export type MaintenanceKind =
   | 'oil'
   | 'inspection'

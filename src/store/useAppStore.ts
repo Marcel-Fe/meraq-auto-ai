@@ -6,6 +6,7 @@ import type {
   ChatThread,
   DiagnosisEntry,
   MaintenanceItem,
+  PartScan,
   Quote,
   QuoteItem,
   Vehicle,
@@ -32,6 +33,7 @@ interface AppState {
   activities: ActivityEntry[]
   diagnoses: DiagnosisEntry[]
   documents: VehicleDocument[]
+  partScans: PartScan[]
   quotes: Quote[]
   threads: ChatThread[]
   activeThreadId: string | null
@@ -63,6 +65,10 @@ interface AppState {
   updateDocument: (id: string, patch: Partial<VehicleDocument>) => void
   removeDocument: (id: string) => void
 
+  // Gemerkte Foto-Analysen aus dem Teilefinder
+  addPartScan: (scan: Omit<PartScan, 'id'>) => string
+  removePartScan: (id: string) => void
+
   // Kostenvoranschläge
   createQuote: (vehicleId: string, hourlyRateEur: number) => string
   addQuoteItem: (quoteId: string, item: Omit<QuoteItem, 'id'>) => void
@@ -91,6 +97,7 @@ function seedState() {
     activities: demoActivities(demoVehicle.id),
     diagnoses: demoDiagnoses(demoVehicle.id),
     documents: [] as VehicleDocument[],
+    partScans: [] as PartScan[],
     quotes: [] as Quote[],
     threads: [] as ChatThread[],
     activeThreadId: null,
@@ -193,6 +200,7 @@ export const useAppStore = create<AppState>()(
             activities: s.activities.filter((a) => a.vehicleId !== id),
             diagnoses: s.diagnoses.filter((d) => d.vehicleId !== id),
             documents: s.documents.filter((d) => d.vehicleId !== id),
+            partScans: s.partScans.filter((p) => p.vehicleId !== id),
             quotes: s.quotes.filter((q) => q.vehicleId !== id),
           }
         }),
@@ -304,6 +312,14 @@ export const useAppStore = create<AppState>()(
 
       removeDocument: (id) => set((s) => ({ documents: s.documents.filter((d) => d.id !== id) })),
 
+      addPartScan: (scan) => {
+        const entry: PartScan = { ...scan, id: uid() }
+        set((s) => ({ partScans: [entry, ...s.partScans] }))
+        return entry.id
+      },
+
+      removePartScan: (id) => set((s) => ({ partScans: s.partScans.filter((p) => p.id !== id) })),
+
       createQuote: (vehicleId, hourlyRateEur) => {
         const quote: Quote = {
           id: uid(),
@@ -398,7 +414,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 4,
+      version: 5,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -431,6 +447,11 @@ export const useAppStore = create<AppState>()(
               edited: m.edited ?? false,
             })),
           }
+        }
+
+        // v4 → v5: gemerkte Foto-Analysen aus dem Teilefinder kamen dazu
+        if (from < 5) {
+          state = { ...state, partScans: state.partScans ?? [] }
         }
 
         return state
@@ -475,4 +496,9 @@ export const useVehicleDiagnoses = () =>
 export const useVehicleDocuments = () =>
   useAppStore(
     useShallow((s) => s.documents.filter((d) => d.vehicleId === s.activeVehicleId).sort(byDateDesc)),
+  )
+
+export const useVehiclePartScans = () =>
+  useAppStore(
+    useShallow((s) => s.partScans.filter((p) => p.vehicleId === s.activeVehicleId).sort(byDateDesc)),
   )
