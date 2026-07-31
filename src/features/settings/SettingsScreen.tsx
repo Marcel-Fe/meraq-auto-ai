@@ -12,9 +12,9 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
-import { Button, Card, Field, Input, SectionTitle, Select, cn } from '../../components/ui'
-import { useAppStore, type AiModel } from '../../store/useAppStore'
-import { verifyApiKey } from '../../lib/ai/client'
+import { Badge, Button, Card, Field, Input, SectionTitle, Segmented, Select, cn } from '../../components/ui'
+import { useAppStore, type AiModel, type AiProvider } from '../../store/useAppStore'
+import { verifyApiKey, type KeyCheck } from '../../lib/ai/client'
 import { clearFiles } from '../../lib/fileStore'
 
 const MODELS: { value: AiModel; label: string; hint: string }[] = [
@@ -23,23 +23,47 @@ const MODELS: { value: AiModel; label: string; hint: string }[] = [
   { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5', hint: 'Am günstigsten' },
 ]
 
+// Kurz halten: Bei 390 px stehen beide Schalter nebeneinander, der Unterschied
+// wird darunter ohnehin erklärt
+const PROVIDERS = [
+  { value: 'google' as const, label: 'Google · gratis' },
+  { value: 'anthropic' as const, label: 'Anthropic · stärker' },
+]
+
 export default function SettingsScreen() {
   const { settings, updateSettings, resetAll } = useAppStore()
-  const [key, setKey] = useState(settings.apiKey)
+  const google = settings.provider === 'google'
+  const [key, setKey] = useState(google ? settings.googleApiKey : settings.apiKey)
   const [show, setShow] = useState(false)
   const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [result, setResult] = useState<KeyCheck | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
+
+  const switchProvider = (provider: AiProvider) => {
+    updateSettings({ provider })
+    setKey(provider === 'google' ? settings.googleApiKey : settings.apiKey)
+    setResult(null)
+  }
 
   const saveAndVerify = async () => {
     const trimmed = key.trim()
-    updateSettings({ apiKey: trimmed })
+    updateSettings(google ? { googleApiKey: trimmed } : { apiKey: trimmed })
     if (!trimmed) {
       setResult(null)
       return
     }
     setChecking(true)
-    setResult(await verifyApiKey(trimmed, settings.model))
+    const check = await verifyApiKey(
+      settings.provider,
+      trimmed,
+      google ? settings.googleModel : settings.model,
+    )
+    // Ist das eingestellte Google-Modell verschwunden, still auf das erste
+    // verfügbare wechseln – sonst liefe der nächste Aufruf in einen 404
+    if (check.ok && google && check.models?.length && !check.models.some((m) => m.id === settings.googleModel)) {
+      updateSettings({ googleModel: check.models[0].id })
+    }
+    setResult(check)
     setChecking(false)
   }
 
@@ -53,7 +77,7 @@ export default function SettingsScreen() {
       diagnoses: state.diagnoses,
       documents: state.documents,
       // Der API-Schlüssel wird bewusst NICHT exportiert
-      settings: { ...state.settings, apiKey: '' },
+      settings: { ...state.settings, apiKey: '', googleApiKey: '' },
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -85,12 +109,56 @@ export default function SettingsScreen() {
                 <Sparkles size={19} />
               </span>
               <p className="text-[12.5px] leading-relaxed text-ink-muted">
-                Der Assistent läuft mit Deinem eigenen Anthropic-Schlüssel. Er wird nur in diesem Browser
-                gespeichert und direkt an Anthropic geschickt – MERAQ hat keinen Server, der ihn sehen könnte.
+                Der Assistent läuft mit Deinem eigenen Schlüssel. Er wird nur in diesem Browser
+                gespeichert und geht direkt an den Anbieter – MERAQ hat keinen Server, der ihn
+                sehen könnte.
               </p>
             </div>
 
-            <Field label="API-Schlüssel" hint="Beginnt mit sk-ant-. Erstellbar unter console.anthropic.com">
+            <Field label="Anbieter">
+              <Segmented options={PROVIDERS} value={settings.provider} onChange={switchProvider} />
+            </Field>
+
+            <div className="mt-3 mb-4 rounded-xl bg-white/4 px-3 py-2.5">
+              {google ? (
+                <>
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <Badge tone="ok">kostenlos</Badge>
+                    <span className="text-[12.5px] font-medium">Google Gemini</span>
+                  </div>
+                  <p className="text-[12px] leading-relaxed text-ink-muted">
+                    Der Schlüssel aus Google AI Studio kostet nichts und braucht keine Kreditkarte.
+                    Es gibt ein tägliches Freikontingent – für ein Fahrzeug reicht das im Alltag aus.
+                  </p>
+                  <p className="mt-2 text-[12px] leading-relaxed text-warn">
+                    Wichtig: Beim kostenlosen Kontingent behält sich Google vor, Deine Eingaben zur
+                    Verbesserung seiner Modelle auszuwerten – auch durch Menschen. Schick darüber
+                    keine Dokumente, die Du nicht aus der Hand geben willst. Bei Anthropic gilt das
+                    nicht.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <Badge tone="brand">kostenpflichtig</Badge>
+                    <span className="text-[12.5px] font-medium">Anthropic Claude</span>
+                  </div>
+                  <p className="text-[12px] leading-relaxed text-ink-muted">
+                    Beste Qualität bei kniffligen Fahrzeugfragen, Du zahlst pro Anfrage bei
+                    Anthropic. Eingaben werden nicht zum Training verwendet.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <Field
+              label="API-Schlüssel"
+              hint={
+                google
+                  ? 'Kostenlos erstellbar unter aistudio.google.com/apikey'
+                  : 'Beginnt mit sk-ant-. Erstellbar unter console.anthropic.com'
+              }
+            >
               <div className="relative">
                 <Input
                   type={show ? 'text' : 'password'}
@@ -99,7 +167,7 @@ export default function SettingsScreen() {
                     setKey(e.target.value)
                     setResult(null)
                   }}
-                  placeholder="sk-ant-..."
+                  placeholder={google ? 'AIza...' : 'sk-ant-...'}
                   autoComplete="off"
                   spellCheck={false}
                   className="pr-11 font-mono text-[13px]"
@@ -140,28 +208,58 @@ export default function SettingsScreen() {
             )}
 
             <a
-              href="https://console.anthropic.com/settings/keys"
+              href={
+                google
+                  ? 'https://aistudio.google.com/apikey'
+                  : 'https://console.anthropic.com/settings/keys'
+              }
               target="_blank"
               rel="noreferrer"
               className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-blue"
             >
-              Schlüssel bei Anthropic erstellen
+              {google ? 'Kostenlosen Schlüssel bei Google holen' : 'Schlüssel bei Anthropic erstellen'}
               <ExternalLink size={14} />
             </a>
 
             <div className="mt-5 border-t border-white/8 pt-4">
-              <Field label="Modell">
-                <Select
-                  value={settings.model}
-                  onChange={(e) => updateSettings({ model: e.target.value as AiModel })}
+              {google ? (
+                <Field
+                  label="Modell"
+                  hint={
+                    result?.models?.length
+                      ? 'Flash-Modelle stehen oben – sie haben das größte Freikontingent.'
+                      : 'Nach „Speichern & prüfen" erscheinen hier alle Modelle, die Dein Schlüssel freischaltet.'
+                  }
                 >
-                  {MODELS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label} – {m.hint}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+                  <Select
+                    value={settings.googleModel}
+                    onChange={(e) => updateSettings({ googleModel: e.target.value })}
+                  >
+                    {result?.models?.length ? (
+                      result.models.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={settings.googleModel}>{settings.googleModel}</option>
+                    )}
+                  </Select>
+                </Field>
+              ) : (
+                <Field label="Modell">
+                  <Select
+                    value={settings.model}
+                    onChange={(e) => updateSettings({ model: e.target.value as AiModel })}
+                  >
+                    {MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label} – {m.hint}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
             </div>
           </Card>
         </section>

@@ -93,7 +93,7 @@ In dieser Version protokolliert MERAQ Deine Kilometerstände und Werkstattbesuch
   help: {
     title: 'Hilfe & Kontakt',
     body: `**Wie aktiviere ich den KI-Assistenten?**
-Einstellungen öffnen, einen Anthropic-API-Schlüssel eintragen, auf „Speichern & prüfen" tippen. Der Schlüssel bleibt auf Deinem Gerät.
+Einstellungen öffnen, Anbieter wählen, Schlüssel eintragen, auf „Speichern & prüfen" tippen. Bei Google ist der Schlüssel kostenlos und ohne Kreditkarte zu bekommen; Anthropic kostet pro Anfrage, antwortet bei kniffligen Fragen aber besser. Der Schlüssel bleibt in beiden Fällen auf Deinem Gerät.
 
 **Warum sehe ich Beispieldaten?**
 Beim ersten Start ist ein Beispielfahrzeug hinterlegt, damit Du alles ausprobieren kannst. Unter „Mein Fahrzeug" legst Du Dein eigenes an und kannst das Beispiel löschen.

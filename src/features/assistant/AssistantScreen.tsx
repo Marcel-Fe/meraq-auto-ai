@@ -92,11 +92,11 @@ export default function AssistantScreen() {
             <div className="min-w-0 flex-1">
               <p className="text-[14.5px] font-semibold">Assistent noch nicht aktiviert</p>
               <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
-                Der Assistent nutzt Deinen eigenen Anthropic-API-Schlüssel. Er wird ausschließlich auf
-                diesem Gerät gespeichert.
+                Der Assistent läuft mit Deinem eigenen Schlüssel – bei Google bekommst Du ihn
+                kostenlos und ohne Kreditkarte. Er wird ausschließlich auf diesem Gerät gespeichert.
               </p>
               <Link to="/settings" className="mt-3 inline-block">
-                <Button size="sm">Jetzt einrichten</Button>
+                <Button size="sm">Kostenlos einrichten</Button>
               </Link>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function AssistantScreen() {
               value={input}
               rows={1}
               disabled={!keySet}
-              placeholder={keySet ? 'Frage stellen…' : 'Erst API-Schlüssel eintragen'}
+              placeholder={keySet ? 'Frage stellen…' : 'Erst KI einrichten – kostenlos möglich'}
               onChange={(e) => {
                 setInput(e.target.value)
                 e.target.style.height = 'auto'

@@ -94,6 +94,16 @@ Erledigt ✅
    nicht ehrlich wäre: Fehlt der Hubraum, bleibt die Steuer „—" statt 0 €, und wo ein
    Fahrzeug mit erfassten Belegen gegen ein geschätztes antritt, entfällt die Wertung.
 
+10. **KI kostenlos nutzbar** ✅ — die App spricht wahlweise mit Google Gemini oder
+    Anthropic Claude. Ein Schlüssel aus Google AI Studio ist gratis und ohne Kreditkarte
+    zu bekommen; damit ist der Assistent für jeden nutzbar, ohne dass der Betreiber zahlt.
+    Ein Schlüssel des Betreibers käme nicht in Frage — er wäre im Browser auslesbar.
+    Beide Anbieter liegen hinter `askAi()` / `askAiStructured()`, kein Feature-Screen
+    kennt den Unterschied. Google-Modelle werden beim Prüfen des Schlüssels abgefragt
+    statt fest hinterlegt. Der Datenschutz-Unterschied (Google wertet Eingaben im
+    kostenlosen Kontingent aus) steht offen in den Einstellungen.
+    Geprüft mit `npm run test:ai` über abgefangene Antworten — ohne Guthabenverbrauch.
+
 ## Phase 3 — Ausbau
 
 - **Echte Werkstattsuche** über eine Karten-Schnittstelle (Overpass ist kostenlos,

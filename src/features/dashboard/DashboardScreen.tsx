@@ -139,7 +139,7 @@ export default function DashboardScreen() {
             <span className="min-w-0 flex-1">
               <span className="block text-[14px] font-semibold">KI-Assistent aktivieren</span>
               <span className="block text-[12px] text-ink-muted">
-                API-Schlüssel eintragen – dauert eine Minute
+                Kostenlos einrichten – dauert eine Minute
               </span>
             </span>
           </Link>

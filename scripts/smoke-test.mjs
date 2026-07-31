@@ -98,11 +98,15 @@ await page.waitForTimeout(600)
 const persisted = await page.evaluate(() => document.body.innerText.includes('75.000'))
 if (!persisted) problems.push('[persistenz] Geänderter Kilometerstand nach Reload nicht gefunden')
 
-// KI ohne Schlüssel darf nicht abstürzen, sondern muss einen Hinweis zeigen
+// KI ohne Schlüssel darf nicht abstürzen, sondern muss einen Hinweis samt Weg
+// zur Einrichtung zeigen. Geprüft wird das Verhalten, nicht der Wortlaut.
 await page.evaluate(() => (window.location.hash = '#/assistant'))
 await page.waitForTimeout(600)
-const hint = await page.evaluate(() => document.body.innerText.includes('API-Schlüssel'))
-if (!hint) problems.push('[assistant] Kein Hinweis auf fehlenden API-Schlüssel')
+const hint = await page.evaluate(() => {
+  const t = document.body.innerText
+  return t.includes('noch nicht aktiviert') && /Schlüssel/.test(t) && /kostenlos/i.test(t)
+})
+if (!hint) problems.push('[assistant] Kein Hinweis auf den fehlenden Schlüssel samt kostenlosem Weg')
 
 await browser.close()
 

@@ -64,7 +64,18 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 - Schreibende Aktionen gehören in den Store, nicht in die Komponente.
 
 ### KI
-- Alle Aufrufe über [src/lib/ai/client.ts](src/lib/ai/client.ts) — nicht direkt das SDK importieren.
+- Zwei Anbieter hinter denselben Funktionen: **Google Gemini** (kostenloser Schlüssel aus
+  Google AI Studio, Vorgabe) und **Anthropic Claude** (kostenpflichtig, beste Qualität).
+  Umgestellt wird in den Einstellungen; der Schlüssel bleibt in beiden Fällen auf dem Gerät.
+- Alle Aufrufe über `askAi()` bzw. `askAiStructured()` in
+  [src/lib/ai/client.ts](src/lib/ai/client.ts) — nicht direkt ein SDK importieren.
+  Das Nachrichtenformat von Anthropic ist das Hausformat;
+  [src/lib/ai/google.ts](src/lib/ai/google.ts) übersetzt es. **Kein Feature-Screen darf
+  wissen, welcher Anbieter eingestellt ist.**
+- Google-Modelle nie fest hinterlegen — Google benennt sie um. Die Liste kommt beim
+  Prüfen des Schlüssels über `listGoogleModels()`.
+- Beim kostenlosen Google-Kontingent wertet Google Eingaben zur Produktverbesserung aus.
+  Dieser Hinweis muss in den Einstellungen sichtbar bleiben.
 - Der System-Prompt gehört in [src/lib/ai/prompts.ts](src/lib/ai/prompts.ts), der Fahrzeugkontext
   kommt aus `vehicleContext()`. Der cache_control-Breakpoint sitzt auf dem letzten System-Block;
   alles Wechselnde muss danach stehen, sonst greift das Prompt-Caching nicht.
@@ -88,6 +99,7 @@ npm run build          # tsc + vite, muss ohne Fehler durchlaufen
 npm run preview        # Server auf http://localhost:4173/meraq-auto-ai/
 npm run test:smoke     # 23 Screens im iPhone-Format, Screenshots in screenshots/
 npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
+npm run test:ai        # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
 ```
 
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz

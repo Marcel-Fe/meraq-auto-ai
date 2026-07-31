@@ -22,6 +22,7 @@ sind mögliche spätere Ausbaustufen.
 | Kein Backend, kein Login | Keine Serverkosten, kein Datenschutzrisiko, für einen Einzelentwickler wartbar |
 | Daten in localStorage + IndexedDB | Alles bleibt auf dem Gerät. Bilder in IndexedDB, weil localStorage bei ~5 MB endet |
 | KI mit Schlüssel des Nutzers | Kein Proxy nötig, keine KI-Kosten für den Betreiber, Schlüssel verlässt das Gerät nicht |
+| Zwei KI-Anbieter zur Wahl | Google ist kostenlos und macht den Einstieg möglich, Anthropic liefert die beste Qualität. Ein Schlüssel des Betreibers wäre im Browser auslesbar — deshalb bringt jeder seinen eigenen mit |
 | HashRouter | GitHub Pages liefert bei Pfad-Routen 404 — Hash-Routen funktionieren immer |
 | Tailwind v4 mit `@theme` | Design-Tokens direkt in CSS, keine separate Config-Datei |
 
