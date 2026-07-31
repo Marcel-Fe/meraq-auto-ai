@@ -1,4 +1,5 @@
-import type { DtcSeverity } from '../types'
+import type { DtcSeverity, Vehicle } from '../types'
+import { vehicleTraits, type VehicleTraits } from './vehicleProfile'
 
 export interface DtcInfo {
   code: string
@@ -10,15 +11,22 @@ export interface DtcInfo {
   costMin: number
   costMax: number
   driveable: 'ja' | 'eingeschränkt' | 'nein'
+  /** Gilt der Code nur für bestimmte Fahrzeuge? Ohne Angabe: für alle */
+  requires?: (t: VehicleTraits) => boolean
 }
 
 /**
- * Auszug der häufigsten genormten OBD-II-Codes (SAE J2012).
+ * Auszug der häufigsten genormten OBD-II-Codes (SAE J2012 / ISO 15031-6).
  * Diese Codes sind herstellerübergreifend standardisiert; die Kostenspannen
  * sind Erfahrungswerte und im UI als Schätzung gekennzeichnet.
- * Unbekannte Codes werden über parseDtc() eingeordnet und an die KI übergeben.
+ *
+ * Bewusst NICHT enthalten sind herstellerspezifische Codes (P1xxx und Teile von
+ * P3xxx): Derselbe Code bedeutet bei VW etwas anderes als bei Toyota. Eine
+ * Zuordnung wäre geraten – solche Codes gehen über parseDtc an die KI, die den
+ * Fahrzeugkontext kennt.
  */
 export const DTC_DB: DtcInfo[] = [
+  /* ---------- Zündung und Verbrennung ---------- */
   {
     code: 'P0300',
     title: 'Zufällige Zündaussetzer erkannt',
@@ -28,6 +36,7 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 120,
     costMax: 650,
     driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
   },
   {
     code: 'P0301',
@@ -38,7 +47,120 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 90,
     costMax: 500,
     driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
   },
+  {
+    code: 'P0302',
+    title: 'Zündaussetzer Zylinder 2',
+    system: 'Motor',
+    severity: 'critical',
+    causes: ['Zündkerze Zylinder 2', 'Zündspule Zylinder 2', 'Einspritzdüse Zylinder 2'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0303',
+    title: 'Zündaussetzer Zylinder 3',
+    system: 'Motor',
+    severity: 'critical',
+    causes: ['Zündkerze Zylinder 3', 'Zündspule Zylinder 3', 'Einspritzdüse Zylinder 3'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0304',
+    title: 'Zündaussetzer Zylinder 4',
+    system: 'Motor',
+    severity: 'critical',
+    causes: ['Zündkerze Zylinder 4', 'Zündspule Zylinder 4', 'Einspritzdüse Zylinder 4'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0305',
+    title: 'Zündaussetzer Zylinder 5',
+    system: 'Motor',
+    severity: 'critical',
+    causes: ['Zündkerze Zylinder 5', 'Zündspule Zylinder 5', 'Einspritzdüse Zylinder 5'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0306',
+    title: 'Zündaussetzer Zylinder 6',
+    system: 'Motor',
+    severity: 'critical',
+    causes: ['Zündkerze Zylinder 6', 'Zündspule Zylinder 6', 'Einspritzdüse Zylinder 6'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0325',
+    title: 'Klopfsensor 1 – Stromkreis fehlerhaft',
+    system: 'Motorsteuerung',
+    severity: 'warn',
+    causes: ['Klopfsensor defekt', 'Kabel oder Stecker beschädigt', 'Sensor nicht richtig angezogen'],
+    costMin: 90,
+    costMax: 450,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasSparkPlugs,
+  },
+  {
+    code: 'P0335',
+    title: 'Kurbelwellensensor – Stromkreis fehlerhaft',
+    system: 'Motorsteuerung',
+    severity: 'critical',
+    causes: ['Kurbelwellensensor defekt', 'Geberrad beschädigt', 'Kabelbruch'],
+    costMin: 90,
+    costMax: 500,
+    driveable: 'nein',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0340',
+    title: 'Nockenwellensensor – Stromkreis fehlerhaft',
+    system: 'Motorsteuerung',
+    severity: 'critical',
+    causes: ['Nockenwellensensor defekt', 'Steuerkette gelängt', 'Kabelbruch'],
+    costMin: 90,
+    costMax: 600,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0011',
+    title: 'Nockenwellenverstellung – Position abweichend (Bank 1)',
+    system: 'Motorsteuerung',
+    severity: 'warn',
+    causes: ['Ölstand zu niedrig / Öl verschmutzt', 'Nockenwellenversteller verschlissen', 'Magnetventil defekt'],
+    costMin: 90,
+    costMax: 1100,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0016',
+    title: 'Kurbel-/Nockenwelle – Korrelationsfehler',
+    system: 'Motorsteuerung',
+    severity: 'critical',
+    causes: ['Steuerkette gelängt', 'Zahnriemen übergesprungen', 'Sensor defekt'],
+    costMin: 250,
+    costMax: 2500,
+    driveable: 'nein',
+    requires: (t) => t.hasCombustionEngine,
+  },
+
+  /* ---------- Gemisch und Sensorik ---------- */
   {
     code: 'P0171',
     title: 'Gemisch zu mager (Bank 1)',
@@ -48,6 +170,7 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 80,
     costMax: 420,
     driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
   },
   {
     code: 'P0172',
@@ -58,7 +181,109 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 60,
     costMax: 380,
     driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
   },
+  {
+    code: 'P0174',
+    title: 'Gemisch zu mager (Bank 2)',
+    system: 'Gemischaufbereitung',
+    severity: 'warn',
+    causes: ['Falschluft auf Bank 2', 'Luftmassenmesser verschmutzt', 'Kraftstoffdruck zu niedrig'],
+    costMin: 80,
+    costMax: 420,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0175',
+    title: 'Gemisch zu fett (Bank 2)',
+    system: 'Gemischaufbereitung',
+    severity: 'warn',
+    causes: ['Einspritzdüse undicht', 'Lambdasonde träge', 'Kraftstoffdruck zu hoch'],
+    costMin: 60,
+    costMax: 380,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0101',
+    title: 'Luftmassenmesser – Signal unplausibel',
+    system: 'Gemischaufbereitung',
+    severity: 'warn',
+    causes: ['Luftmassenmesser verschmutzt oder defekt', 'Ansaugtrakt undicht', 'Luftfilter stark zugesetzt'],
+    costMin: 80,
+    costMax: 400,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0102',
+    title: 'Luftmassenmesser – Signal zu niedrig',
+    system: 'Gemischaufbereitung',
+    severity: 'warn',
+    causes: ['Luftmassenmesser defekt', 'Steckverbindung lose', 'Kabelbruch'],
+    costMin: 80,
+    costMax: 400,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0113',
+    title: 'Ansauglufttemperatursensor – Signal zu hoch',
+    system: 'Gemischaufbereitung',
+    severity: 'info',
+    causes: ['Sensor defekt', 'Steckverbindung korrodiert', 'Kabelbruch'],
+    costMin: 60,
+    costMax: 260,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0118',
+    title: 'Kühlmitteltemperatursensor – Signal zu hoch',
+    system: 'Kühlung',
+    severity: 'warn',
+    causes: ['Temperatursensor defekt', 'Kabelbruch', 'Kühlmittelmangel'],
+    costMin: 70,
+    costMax: 320,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCoolant,
+  },
+  {
+    code: 'P0131',
+    title: 'Lambdasonde vor Kat – Spannung zu niedrig (Bank 1)',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Lambdasonde gealtert', 'Abgasanlage undicht', 'Kabelbruch zur Sonde'],
+    costMin: 120,
+    costMax: 500,
+    driveable: 'ja',
+    requires: (t) => t.hasCatalyst,
+  },
+  {
+    code: 'P0135',
+    title: 'Lambdasondenheizung vor Kat – Stromkreis (Bank 1)',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Heizelement der Sonde defekt', 'Sicherung durchgebrannt', 'Kabelbruch'],
+    costMin: 120,
+    costMax: 480,
+    driveable: 'ja',
+    requires: (t) => t.hasCatalyst,
+  },
+  {
+    code: 'P0141',
+    title: 'Lambdasondenheizung hinter Kat – Stromkreis (Bank 1)',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Heizelement der Sonde defekt', 'Sicherung durchgebrannt', 'Kabelbruch'],
+    costMin: 120,
+    costMax: 480,
+    driveable: 'ja',
+    requires: (t) => t.hasCatalyst,
+  },
+
+  /* ---------- Abgas ---------- */
   {
     code: 'P0420',
     title: 'Katalysator-Wirkungsgrad unter Grenzwert (Bank 1)',
@@ -68,6 +293,18 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 250,
     costMax: 1600,
     driveable: 'ja',
+    requires: (t) => t.hasCatalyst,
+  },
+  {
+    code: 'P0430',
+    title: 'Katalysator-Wirkungsgrad unter Grenzwert (Bank 2)',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Katalysator gealtert', 'Lambdasonde hinter Kat defekt', 'Undichtigkeit in der Abgasanlage'],
+    costMin: 250,
+    costMax: 1600,
+    driveable: 'ja',
+    requires: (t) => t.hasCatalyst,
   },
   {
     code: 'P0401',
@@ -78,6 +315,7 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 150,
     costMax: 900,
     driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
   },
   {
     code: 'P0402',
@@ -88,7 +326,88 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 150,
     costMax: 800,
     driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
   },
+  {
+    code: 'P0403',
+    title: 'AGR-Steuerung – Stromkreis fehlerhaft',
+    system: 'Abgasrückführung',
+    severity: 'warn',
+    causes: ['AGR-Ventil elektrisch defekt', 'Kabelbruch', 'Steuergerät-Endstufe defekt'],
+    costMin: 150,
+    costMax: 850,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0411',
+    title: 'Sekundärluftsystem – falscher Durchfluss',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Sekundärluftpumpe defekt', 'Umschaltventil hängt', 'Schlauch verstopft oder undicht'],
+    costMin: 180,
+    costMax: 900,
+    driveable: 'ja',
+    requires: (t) => t.hasSparkPlugs,
+  },
+  {
+    code: 'P0442',
+    title: 'Tankentlüftung – kleine Leckage',
+    system: 'Kraftstoffsystem',
+    severity: 'info',
+    causes: ['Tankdeckel nicht dicht', 'Schlauch porös', 'Entlüftungsventil undicht'],
+    costMin: 20,
+    costMax: 350,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0455',
+    title: 'Tankentlüftung – große Leckage',
+    system: 'Kraftstoffsystem',
+    severity: 'warn',
+    causes: ['Tankdeckel fehlt oder defekt', 'Leitung abgerissen', 'Aktivkohlefilter beschädigt'],
+    costMin: 20,
+    costMax: 450,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P2002',
+    title: 'Partikelfilter – Wirkungsgrad zu gering',
+    system: 'Abgas',
+    severity: 'warn',
+    // Gilt für Diesel- und Ottopartikelfilter – Benziner haben ab 2018 ebenfalls einen
+    causes: ['Filter beladen (zu viel Kurzstrecke)', 'Differenzdrucksensor defekt', 'Filter am Lebensende'],
+    costMin: 180,
+    costMax: 2400,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasParticulateFilter,
+  },
+  {
+    code: 'P2463',
+    title: 'Partikelfilter – zu viel Ruß angesammelt',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['Regeneration wurde mehrfach abgebrochen', 'Zu viel Kurzstrecke', 'Differenzdrucksensor defekt'],
+    costMin: 150,
+    costMax: 2200,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasParticulateFilter,
+  },
+  {
+    code: 'P20EE',
+    title: 'SCR-Katalysator – Wirkungsgrad zu gering (AdBlue)',
+    system: 'Abgas',
+    severity: 'warn',
+    causes: ['AdBlue-Qualität oder -Stand', 'Dosierventil verstopft', 'NOx-Sensor defekt'],
+    costMin: 200,
+    costMax: 2000,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasDiesel,
+  },
+
+  /* ---------- Kraftstoff und Aufladung ---------- */
   {
     code: 'P0087',
     title: 'Kraftstoffdruck zu niedrig',
@@ -98,6 +417,29 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 90,
     costMax: 1400,
     driveable: 'nein',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0088',
+    title: 'Kraftstoffdruck zu hoch',
+    system: 'Kraftstoffsystem',
+    severity: 'critical',
+    causes: ['Druckregelventil defekt', 'Rücklaufleitung verstopft', 'Drucksensor liefert falsche Werte'],
+    costMin: 120,
+    costMax: 1300,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0201',
+    title: 'Einspritzventil Zylinder 1 – Stromkreis fehlerhaft',
+    system: 'Kraftstoffsystem',
+    severity: 'critical',
+    causes: ['Einspritzventil defekt', 'Kabelbruch am Ventil', 'Endstufe im Steuergerät defekt'],
+    costMin: 150,
+    costMax: 900,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
   },
   {
     code: 'P0299',
@@ -108,17 +450,43 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 120,
     costMax: 2200,
     driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
   },
   {
-    code: 'P2002',
-    title: 'Dieselpartikelfilter – Wirkungsgrad zu gering',
-    system: 'Abgas',
-    severity: 'warn',
-    causes: ['DPF beladen (zu viel Kurzstrecke)', 'Differenzdrucksensor defekt', 'DPF am Lebensende'],
-    costMin: 180,
-    costMax: 2400,
+    code: 'P0234',
+    title: 'Turbolader – Ladedruck zu hoch',
+    system: 'Aufladung',
+    severity: 'critical',
+    causes: ['Ladedruckregelung hängt', 'Unterdruckdose oder Steller defekt', 'Ladedrucksensor liefert falsche Werte'],
+    costMin: 150,
+    costMax: 1800,
     driveable: 'eingeschränkt',
+    requires: (t) => t.hasCombustionEngine,
   },
+  {
+    code: 'P2279',
+    title: 'Ansaugsystem undicht',
+    system: 'Gemischaufbereitung',
+    severity: 'warn',
+    causes: ['Ansaugschlauch gerissen', 'Dichtung porös', 'Kurbelgehäuseentlüftung defekt'],
+    costMin: 80,
+    costMax: 600,
+    driveable: 'ja',
+    requires: (t) => t.hasCombustionEngine,
+  },
+  {
+    code: 'P0380',
+    title: 'Glühkerzen – Stromkreis fehlerhaft',
+    system: 'Motor',
+    severity: 'warn',
+    causes: ['Glühkerze defekt', 'Glühzeitsteuergerät defekt', 'Kabel oder Sicherung'],
+    costMin: 120,
+    costMax: 700,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasDiesel,
+  },
+
+  /* ---------- Kühlung, Schmierung, Elektrik ---------- */
   {
     code: 'P0128',
     title: 'Kühlmitteltemperatur unter Regeltemperatur',
@@ -128,6 +496,40 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 90,
     costMax: 400,
     driveable: 'ja',
+    requires: (t) => t.hasCoolant,
+  },
+  {
+    code: 'P0217',
+    title: 'Motor überhitzt',
+    system: 'Kühlung',
+    severity: 'critical',
+    causes: ['Kühlmittelmangel', 'Wasserpumpe defekt', 'Kühlerlüfter läuft nicht', 'Thermostat hängt zu'],
+    costMin: 120,
+    costMax: 2500,
+    driveable: 'nein',
+    requires: (t) => t.hasCoolant,
+  },
+  {
+    code: 'P0480',
+    title: 'Kühlerlüfter – Stromkreis fehlerhaft',
+    system: 'Kühlung',
+    severity: 'warn',
+    causes: ['Lüftermotor defekt', 'Relais oder Sicherung', 'Steuergerät der Lüftersteuerung'],
+    costMin: 120,
+    costMax: 800,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasCoolant,
+  },
+  {
+    code: 'P0521',
+    title: 'Öldrucksensor – Signal unplausibel',
+    system: 'Schmierung',
+    severity: 'critical',
+    causes: ['Ölstand zu niedrig', 'Öldrucksensor defekt', 'Ölpumpe verschlissen'],
+    costMin: 80,
+    costMax: 1500,
+    driveable: 'nein',
+    requires: (t) => t.hasEngineOil,
   },
   {
     code: 'P0562',
@@ -140,11 +542,122 @@ export const DTC_DB: DtcInfo[] = [
     driveable: 'eingeschränkt',
   },
   {
+    code: 'P0563',
+    title: 'Bordspannung zu hoch',
+    system: 'Elektrik',
+    severity: 'warn',
+    causes: ['Spannungsregler der Lichtmaschine defekt', 'Batterie defekt', 'Ladesystem falsch angeschlossen'],
+    costMin: 120,
+    costMax: 700,
+    driveable: 'eingeschränkt',
+  },
+
+  /* ---------- Getriebe und Antrieb ---------- */
+  {
+    code: 'P0500',
+    title: 'Geschwindigkeitssensor – kein Signal',
+    system: 'Antrieb',
+    severity: 'warn',
+    causes: ['Sensor defekt', 'Kabelbruch', 'Steuergerät-Softwarefehler'],
+    costMin: 70,
+    costMax: 400,
+    driveable: 'eingeschränkt',
+  },
+  {
+    code: 'P0700',
+    title: 'Getriebesteuerung – Fehler gespeichert',
+    system: 'Getriebe',
+    severity: 'warn',
+    causes: ['Weiterer Code im Getriebesteuergerät hinterlegt', 'Getriebeöl alt oder zu wenig', 'Sensor im Getriebe defekt'],
+    costMin: 90,
+    costMax: 1500,
+    driveable: 'eingeschränkt',
+  },
+  {
+    code: 'P0730',
+    title: 'Falsches Übersetzungsverhältnis',
+    system: 'Getriebe',
+    severity: 'critical',
+    causes: ['Kupplungen im Automatikgetriebe verschlissen', 'Getriebeöl zu alt oder zu wenig', 'Magnetventil defekt'],
+    costMin: 250,
+    costMax: 3500,
+    driveable: 'eingeschränkt',
+    requires: (t) => !t.hasManualClutch,
+  },
+  {
+    code: 'P0741',
+    title: 'Wandlerüberbrückungskupplung – kein Eingriff',
+    system: 'Getriebe',
+    severity: 'warn',
+    causes: ['Magnetventil verstopft', 'Getriebeöl verschlissen', 'Wandler defekt'],
+    costMin: 200,
+    costMax: 2500,
+    driveable: 'eingeschränkt',
+    requires: (t) => !t.hasManualClutch,
+  },
+
+  /* ---------- Hochvolt: Hybrid und Elektro ---------- */
+  {
+    code: 'P0A80',
+    title: 'Hochvoltbatterie – Austausch erforderlich',
+    system: 'Hochvoltsystem',
+    severity: 'critical',
+    causes: ['Einzelne Zellblöcke schwach', 'Batterie am Lebensende', 'Batteriemanagement erkennt Ungleichgewicht'],
+    costMin: 1200,
+    costMax: 9000,
+    driveable: 'eingeschränkt',
+    requires: (t) => t.hasHighVoltageBattery,
+  },
+  {
+    code: 'P0AFA',
+    title: 'Hochvoltbatterie – Systemspannung zu niedrig',
+    system: 'Hochvoltsystem',
+    severity: 'critical',
+    causes: ['Zellblock defekt', 'Batteriemanagement defekt', 'Hochvoltverbindung schlecht'],
+    costMin: 800,
+    costMax: 8000,
+    driveable: 'nein',
+    requires: (t) => t.hasHighVoltageBattery,
+  },
+  {
+    code: 'P0A09',
+    title: 'DC/DC-Wandler – Fehler im Statusschaltkreis',
+    system: 'Hochvoltsystem',
+    severity: 'critical',
+    causes: ['DC/DC-Wandler defekt', '12-V-Bordnetz wird nicht versorgt', 'Steuerleitung unterbrochen'],
+    costMin: 400,
+    costMax: 2500,
+    driveable: 'nein',
+    requires: (t) => t.hasHighVoltageBattery,
+  },
+
+  /* ---------- Fahrwerk, Rückhaltesystem, Bordnetz ---------- */
+  {
     code: 'C1234',
     title: 'ABS – Raddrehzahlsensor Signal fehlerhaft',
     system: 'Bremsen / ABS',
     severity: 'critical',
     causes: ['Raddrehzahlsensor defekt', 'Kabelbruch am Radlauf', 'Impulsring beschädigt'],
+    costMin: 80,
+    costMax: 450,
+    driveable: 'eingeschränkt',
+  },
+  {
+    code: 'C0035',
+    title: 'Raddrehzahlsensor vorne links – Stromkreis',
+    system: 'Bremsen / ABS',
+    severity: 'critical',
+    causes: ['Sensor defekt', 'Kabel am Radlauf gescheuert', 'Impulsring verschmutzt oder beschädigt'],
+    costMin: 80,
+    costMax: 450,
+    driveable: 'eingeschränkt',
+  },
+  {
+    code: 'C0040',
+    title: 'Raddrehzahlsensor vorne rechts – Stromkreis',
+    system: 'Bremsen / ABS',
+    severity: 'critical',
+    causes: ['Sensor defekt', 'Kabel am Radlauf gescheuert', 'Impulsring verschmutzt oder beschädigt'],
     costMin: 80,
     costMax: 450,
     driveable: 'eingeschränkt',
@@ -160,36 +673,6 @@ export const DTC_DB: DtcInfo[] = [
     driveable: 'eingeschränkt',
   },
   {
-    code: 'P0500',
-    title: 'Geschwindigkeitssensor – kein Signal',
-    system: 'Antrieb',
-    severity: 'warn',
-    causes: ['Sensor defekt', 'Kabelbruch', 'Steuergerät-Softwarefehler'],
-    costMin: 70,
-    costMax: 400,
-    driveable: 'eingeschränkt',
-  },
-  {
-    code: 'P0011',
-    title: 'Nockenwellenverstellung – Position abweichend (Bank 1)',
-    system: 'Motorsteuerung',
-    severity: 'warn',
-    causes: ['Ölstand zu niedrig / Öl verschmutzt', 'Nockenwellenversteller verschlissen', 'Magnetventil defekt'],
-    costMin: 90,
-    costMax: 1100,
-    driveable: 'eingeschränkt',
-  },
-  {
-    code: 'P0016',
-    title: 'Kurbel-/Nockenwelle – Korrelationsfehler',
-    system: 'Motorsteuerung',
-    severity: 'critical',
-    causes: ['Steuerkette gelängt', 'Zahnriemen übergesprungen', 'Sensor defekt'],
-    costMin: 250,
-    costMax: 2500,
-    driveable: 'nein',
-  },
-  {
     code: 'U0100',
     title: 'Kommunikation mit Motorsteuergerät verloren',
     system: 'Bordnetz / CAN',
@@ -198,6 +681,36 @@ export const DTC_DB: DtcInfo[] = [
     costMin: 80,
     costMax: 1200,
     driveable: 'nein',
+  },
+  {
+    code: 'U0101',
+    title: 'Kommunikation mit Getriebesteuergerät verloren',
+    system: 'Bordnetz / CAN',
+    severity: 'critical',
+    causes: ['CAN-Leitung unterbrochen', 'Steckverbindung korrodiert', 'Steuergerät defekt'],
+    costMin: 80,
+    costMax: 1200,
+    driveable: 'nein',
+  },
+  {
+    code: 'U0121',
+    title: 'Kommunikation mit ABS-Steuergerät verloren',
+    system: 'Bremsen / ABS',
+    severity: 'critical',
+    causes: ['CAN-Leitung unterbrochen', 'Sicherung defekt', 'ABS-Steuergerät defekt'],
+    costMin: 80,
+    costMax: 1400,
+    driveable: 'eingeschränkt',
+  },
+  {
+    code: 'U0155',
+    title: 'Kommunikation mit Kombiinstrument verloren',
+    system: 'Bordnetz / CAN',
+    severity: 'warn',
+    causes: ['CAN-Leitung unterbrochen', 'Sicherung defekt', 'Kombiinstrument defekt'],
+    costMin: 80,
+    costMax: 900,
+    driveable: 'eingeschränkt',
   },
 ]
 
@@ -234,10 +747,23 @@ export function lookupDtc(input: string): DtcInfo | null {
   }
 }
 
-export function searchDtc(query: string): DtcInfo[] {
+/** Codes, die es bei diesem Fahrzeug überhaupt geben kann */
+export function dtcFor(vehicle?: Vehicle | null): DtcInfo[] {
+  if (!vehicle) return DTC_DB
+  const traits = vehicleTraits(vehicle)
+  return DTC_DB.filter((d) => !d.requires || d.requires(traits))
+}
+
+/**
+ * Suche in den Vorschlägen. Ohne Fahrzeug wird die ganze Liste durchsucht;
+ * mit Fahrzeug nur das, was dazu passt – ein E-Auto bekommt keine Zündaussetzer
+ * vorgeschlagen. Ein selbst eingetippter Code wird trotzdem immer erklärt.
+ */
+export function searchDtc(query: string, vehicle?: Vehicle | null): DtcInfo[] {
+  const list = dtcFor(vehicle)
   const q = query.trim().toLowerCase()
-  if (!q) return DTC_DB
-  return DTC_DB.filter(
+  if (!q) return list
+  return list.filter(
     (d) =>
       d.code.toLowerCase().includes(q) ||
       d.title.toLowerCase().includes(q) ||

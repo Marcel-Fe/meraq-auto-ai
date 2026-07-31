@@ -51,7 +51,7 @@ export default function DiagnosisScreen() {
   const [explanation, setExplanation] = useState('')
 
   const openCodes = diagnoses.filter((d) => !d.resolved && d.code !== '—')
-  const results = useMemo(() => searchDtc(query).slice(0, 12), [query])
+  const results = useMemo(() => searchDtc(query, vehicle).slice(0, 12), [query, vehicle])
   const typed = normalizeDtc(query)
   const canAddTyped = isValidDtc(typed) && !results.some((r) => r.code === typed)
 
@@ -295,8 +295,9 @@ export default function DiagnosisScreen() {
           )}
         </div>
         <p className="mt-4 text-[11.5px] leading-relaxed text-ink-faint">
-          Enthalten sind die häufigsten genormten OBD-II-Codes. Herstellerspezifische Codes kann die KI
-          ebenfalls einordnen.
+          Vorgeschlagen werden die genormten OBD-II-Codes, die es bei Deinem Fahrzeug geben kann.
+          Jeden anderen Code kannst Du oben eintippen – auch herstellerspezifische, die die KI
+          mit Deinem Fahrzeugkontext einordnet.
         </p>
       </Sheet>
 

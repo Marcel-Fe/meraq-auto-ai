@@ -73,10 +73,14 @@ Erledigt ✅
    und Tippfehler (I, O, Q, falsche Länge) werden benannt. Das Werk (elfte Stelle) bleibt
    bewusst außen vor — dafür gibt es keine öffentliche Norm, jede Zuordnung wäre geraten.
 
+7. **Fehlercode-Datenbank erweitern** ✅ — 62 genormte Codes statt 18, dazu Hochvolt-,
+   Getriebe- und Bordnetz-Codes. Jeder Code hat ein optionales `requires`, deshalb sieht
+   ein E-Auto nur die 21 Codes, die es bei ihm geben kann. Herstellerspezifische Codes
+   (P1xxx) kommen bewusst NICHT in die Liste — sie bedeuten je Hersteller etwas anderes;
+   eingetippt werden sie weiterhin von der KI mit Fahrzeugkontext erklärt.
+
 Als Nächstes, nach Nutzen pro Aufwand:
 
-7. **Fehlercode-Datenbank erweitern** — aktuell 18 genormte Codes; herstellerspezifische
-   Codes ergänzen (die KI fängt sie bereits ab).
 8. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
 
 ## Phase 3 — Ausbau
