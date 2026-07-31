@@ -16,6 +16,7 @@ import {
   PiggyBank,
   Receipt,
   RotateCcw,
+  Scale,
   Search,
   Settings,
   Shield,
@@ -176,6 +177,12 @@ export default function MoreScreen() {
               title="Erinnerungen"
               subtitle="HU, Wartung und Ablaufdaten in Deinen Kalender legen"
               to="/reminders"
+            />
+            <Row
+              icon={<Scale size={17} />}
+              title="Fahrzeuge vergleichen"
+              subtitle="Kosten, Wertverlust und Marktwert nebeneinander"
+              to="/compare"
             />
           </RowGroup>
         </section>

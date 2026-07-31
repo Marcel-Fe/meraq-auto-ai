@@ -25,6 +25,7 @@
 | **Kostenvoranschlag** (Positionen, MwSt., Export) | `/quote` | ✅ |
 | **Fahrzeug nachschlagen** (Gebrauchtwagen-Check ohne Anlegen) | `/lookup` | ✅ |
 | **Erinnerungen** (Termine als Kalender-Datei) | `/reminders` | ✅ |
+| **Fahrzeuge vergleichen** (2–3 Fahrzeuge nebeneinander) | `/compare` | ✅ |
 
 Fahrzeugunabhängigkeit ✅
 - Teile, Reparaturen, Wartungsplan, Anleitungen und Handbuch richten sich nach dem
@@ -36,7 +37,7 @@ Fahrzeugunabhängigkeit ✅
 Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
-- Smoke-Test über alle 21 Screens im iPhone-Format (`npm run test:smoke`)
+- Smoke-Test über alle 23 Screens im iPhone-Format (`npm run test:smoke`)
 - Erststart-Bundle 98 kB gzip; KI-SDK und Charts werden erst bei Bedarf geladen
 
 ## Phase 2 — Tiefe
@@ -85,9 +86,13 @@ Erledigt ✅
    Nachschlagen-Screen mit Urheber und Lizenz. Abschaltbar in den Einstellungen.
    Der Treffer wird auf Plausibilität geprüft — lieber kein Bild als ein falsches.
 
-Als Nächstes, nach Nutzen pro Aufwand:
-
-9. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
+9. **Mehrere Fahrzeuge im Vergleich** ✅ — `/compare` stellt zwei bis drei Fahrzeuge
+   nebeneinander: Kosten pro Monat und km, Wertverlust, Kraftstoff bzw. Strom, Wartung,
+   Versicherung, Kfz-Steuer und Marktwert. Gerechnet wird mit den bestehenden Bausteinen
+   (`calculateCosts`, `valuate`) je Fahrzeug, zusammengestellt in `src/lib/compare.ts`.
+   Das jeweils günstigere Fahrzeug wird pro Zeile hervorgehoben – außer wo der Vergleich
+   nicht ehrlich wäre: Fehlt der Hubraum, bleibt die Steuer „—" statt 0 €, und wo ein
+   Fahrzeug mit erfassten Belegen gegen ein geschätztes antritt, entfällt die Wertung.
 
 ## Phase 3 — Ausbau
 

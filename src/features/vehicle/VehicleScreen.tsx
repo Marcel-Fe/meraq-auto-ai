@@ -12,6 +12,7 @@ import {
   Palette,
   Pencil,
   Plus,
+  Scale,
   ShieldCheck,
   Trash2,
   Zap,
@@ -203,6 +204,14 @@ export default function VehicleScreen() {
                 className={cn(v.id === vehicle.id && 'bg-white/4')}
               />
             ))}
+            {vehicles.length > 1 && (
+              <Row
+                icon={<Scale size={17} />}
+                title="Fahrzeuge vergleichen"
+                subtitle="Kosten, Wertverlust und Marktwert nebeneinander"
+                to="/compare"
+              />
+            )}
             <Row
               icon={<Plus size={17} />}
               title="Weiteres Fahrzeug anlegen"

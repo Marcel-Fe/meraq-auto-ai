@@ -142,6 +142,33 @@ for (const c of CASES) {
   console.log(`✓ ${c.slug}: ${c.form.make} ${c.form.model} geprüft`)
 }
 
+// --- Vergleich: drei sehr unterschiedliche Fahrzeuge nebeneinander ---
+// Hier stehen jetzt Demo-Fahrzeug, E-Auto, Motorrad und Diesel-Transporter zur Wahl.
+await goto('#/compare')
+await page.getByRole('button', { name: 'Tesla Model 3' }).click()
+await page.waitForTimeout(500)
+
+const vergleich = await text()
+for (const begriff of ['Kosten pro Monat', 'Wertverlust pro Jahr', 'Marktwert heute']) {
+  if (!vergleich.includes(begriff)) problems.push(`[vergleich] "${begriff}" fehlt`)
+}
+// Elektro gegen Verbrenner: Beschriftung und Einheitenhinweis müssen mitwandern
+if (!vergleich.includes('Kraftstoff bzw. Strom')) {
+  problems.push('[vergleich] Beschriftung passt nicht zum Mix aus Elektro und Verbrenner')
+}
+if (!vergleich.includes('unterschiedliche Einheiten')) {
+  problems.push('[vergleich] Hinweis auf unterschiedliche Einheiten (l bzw. kWh) fehlt')
+}
+const breite = await page.evaluate(() => ({
+  scrollW: document.documentElement.scrollWidth,
+  clientW: document.documentElement.clientWidth,
+}))
+if (breite.scrollW > breite.clientW + 1) {
+  problems.push(`[vergleich] horizontales Scrollen bei drei Spalten: ${breite.scrollW} > ${breite.clientW}`)
+}
+await page.screenshot({ path: `${OUT}/vergleich-drei-fahrzeuge.png` })
+console.log('✓ vergleich: drei Fahrzeuge nebeneinander geprüft')
+
 await browser.close()
 
 if (problems.length) {

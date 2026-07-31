@@ -86,7 +86,7 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 ```bash
 npm run build          # tsc + vite, muss ohne Fehler durchlaufen
 npm run preview        # Server auf http://localhost:4173/meraq-auto-ai/
-npm run test:smoke     # 22 Screens im iPhone-Format, Screenshots in screenshots/
+npm run test:smoke     # 23 Screens im iPhone-Format, Screenshots in screenshots/
 npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 ```
 

@@ -30,6 +30,7 @@ const ROUTES = [
   ['repair-costs', '#/repair-costs'],
   ['documents', '#/documents'],
   ['reminders', '#/reminders'],
+  ['compare', '#/compare'],
   ['workshops', '#/workshops'],
   ['more', '#/more'],
   ['assistant', '#/assistant'],
