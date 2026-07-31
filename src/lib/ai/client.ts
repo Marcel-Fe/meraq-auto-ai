@@ -45,6 +45,38 @@ async function createAnthropic(apiKey: string) {
   return new Sdk({ apiKey, dangerouslyAllowBrowser: true })
 }
 
+/** Kennt Google das eingestellte Modell nicht (mehr)? */
+function isUnknownModel(err: unknown) {
+  if (!(err instanceof AiHttpError)) return false
+  if (err.status === 404) return true
+  return err.status === 400 && /not found|not supported|unsupported model/i.test(err.message)
+}
+
+/**
+ * Google benennt Modelle um und schaltet alte ab. Statt den Nutzer mit einer
+ * Fehlermeldung in die Einstellungen zu schicken, holt die App die aktuelle Liste,
+ * merkt sich das erste passende Modell und versucht es genau einmal erneut.
+ *
+ * Das entschärft den einzigen Wert, den wir nicht selbst kennen können: den
+ * voreingestellten Modellnamen.
+ */
+async function withGoogleModelRepair<T>(
+  key: string,
+  model: string,
+  call: (model: string) => Promise<T>,
+): Promise<T> {
+  try {
+    return await call(model)
+  } catch (err) {
+    if (!isUnknownModel(err)) throw err
+    const models = await listGoogleModels(key)
+    const next = models[0]?.id
+    if (!next || next === model) throw err
+    useAppStore.getState().updateSettings({ googleModel: next })
+    return call(next)
+  }
+}
+
 export function hasApiKey() {
   return current().key.length > 0
 }
@@ -77,15 +109,17 @@ export async function askAi(opts: AskOptions): Promise<string> {
   if (!key) throw new MissingApiKeyError()
 
   if (provider === 'google') {
-    return askGoogle({
-      apiKey: key,
-      model,
-      system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
-      messages: opts.messages,
-      maxTokens: opts.maxTokens ?? 2048,
-      signal: opts.signal,
-      onText: opts.onText,
-    })
+    return withGoogleModelRepair(key, model, (m) =>
+      askGoogle({
+        apiKey: key,
+        model: m,
+        system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
+        messages: opts.messages,
+        maxTokens: opts.maxTokens ?? 2048,
+        signal: opts.signal,
+        onText: opts.onText,
+      }),
+    )
   }
 
   const client = await createAnthropic(key)
@@ -128,17 +162,19 @@ export async function askAiStructured<T>(opts: {
   if (!key) throw new MissingApiKeyError()
 
   if (provider === 'google') {
-    return askGoogleStructured<T>({
-      apiKey: key,
-      model,
-      system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
-      messages: opts.messages,
-      maxTokens: opts.maxTokens ?? 2048,
-      signal: opts.signal,
-      toolName: opts.toolName,
-      toolDescription: opts.toolDescription,
-      schema: opts.schema,
-    })
+    return withGoogleModelRepair(key, model, (m) =>
+      askGoogleStructured<T>({
+        apiKey: key,
+        model: m,
+        system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
+        messages: opts.messages,
+        maxTokens: opts.maxTokens ?? 2048,
+        signal: opts.signal,
+        toolName: opts.toolName,
+        toolDescription: opts.toolDescription,
+        schema: opts.schema,
+      }),
+    )
   }
 
   const client = await createAnthropic(key)

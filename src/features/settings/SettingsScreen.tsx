@@ -115,9 +115,12 @@ export default function SettingsScreen() {
               </p>
             </div>
 
-            <Field label="Anbieter">
+            {/* Bewusst kein Field: Dessen <label> würde die Schalter umschließen und
+                dem ersten davon einen falschen Namen für Screenreader geben */}
+            <div role="group" aria-label="KI-Anbieter">
+              <span className="mb-1.5 block text-[12.5px] font-medium text-ink-muted">Anbieter</span>
               <Segmented options={PROVIDERS} value={settings.provider} onChange={switchProvider} />
-            </Field>
+            </div>
 
             <div className="mt-3 mb-4 rounded-xl bg-white/4 px-3 py-2.5">
               {google ? (
