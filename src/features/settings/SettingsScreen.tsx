@@ -190,6 +190,39 @@ export default function SettingsScreen() {
         </section>
 
         <section>
+          <SectionTitle title="Fahrzeugbild" />
+          <Card>
+            <button
+              type="button"
+              onClick={() => updateSettings({ webImages: !settings.webImages })}
+              className="flex min-h-[44px] w-full items-center gap-3 text-left"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-medium">Foto automatisch suchen</span>
+                <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-muted">
+                  Holt einmalig ein frei lizenziertes Foto Deines Modells von Wikimedia Commons
+                  und legt es auf dem Gerät ab. Dabei erfährt Wikimedia, welches Modell Du fährst.
+                  Ein eigenes Foto hat immer Vorrang.
+                </span>
+              </span>
+              <span
+                className={cn(
+                  'relative h-6 w-11 shrink-0 rounded-full transition',
+                  settings.webImages ? 'bg-brand-blue' : 'bg-white/15',
+                )}
+              >
+                <span
+                  className={cn(
+                    'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all',
+                    settings.webImages ? 'left-[22px]' : 'left-0.5',
+                  )}
+                />
+              </span>
+            </button>
+          </Card>
+        </section>
+
+        <section>
           <SectionTitle title="Daten" />
           <Card className="space-y-3">
             <div className="flex items-start gap-3">

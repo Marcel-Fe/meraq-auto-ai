@@ -30,6 +30,10 @@ export interface Vehicle {
   listPriceNew?: number
   /** Vom Nutzer aufgenommenes Foto als Data-URL */
   photo?: string
+  /** Automatisch gefundenes, frei lizenziertes Foto (Wikimedia Commons) */
+  webImage?: VehicleWebImage
+  /** Suche schon gelaufen? Verhindert, dass es bei jedem Aufruf erneut versucht wird */
+  webImageChecked?: boolean
   color?: string
   createdAt: string
 
@@ -80,6 +84,23 @@ export interface DetectedPart {
   /** Typische Probleme, kurz */
   problems?: string[]
   confidence: 'sicher' | 'wahrscheinlich' | 'unsicher'
+}
+
+/**
+ * Frei lizenziertes Fahrzeugfoto aus Wikimedia Commons.
+ * Urheber und Lizenz gehören zur Nutzungsbedingung und werden im UI angezeigt.
+ */
+export interface VehicleWebImage {
+  /** Verkleinertes Bild, liegt beim Fahrzeug – danach ist kein Netz mehr nötig */
+  dataUrl: string
+  /** Dateiname auf Commons */
+  title: string
+  /** Beschreibungsseite der Datei (Nachweis der Lizenz) */
+  pageUrl: string
+  articleTitle: string
+  articleUrl: string
+  author: string
+  license: string
 }
 
 /** Eine gemerkte Foto-Analyse aus dem Teilefinder */

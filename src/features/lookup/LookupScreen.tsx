@@ -24,6 +24,7 @@ import {
   Select,
   cn,
 } from '../../components/ui'
+import { VehicleImage, VehicleImageCredit } from '../../components/VehicleCard'
 import { brandsFor } from '../../data/brands'
 import { repairJobsFor } from '../../data/parts'
 import { calculateCosts, calculateTax } from '../../lib/costs'
@@ -298,6 +299,22 @@ export default function LookupScreen() {
 
         {draft && valuation && costs && profile && (
           <>
+            <Card className="flex items-center gap-3">
+              <VehicleImage vehicle={draft} className="h-20 w-[45%] shrink-0 rounded-xl" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold">
+                  {draft.make} {draft.model}
+                </p>
+                <p className="mt-0.5 text-[12px] text-ink-muted">
+                  {draft.year} · {draft.fuel} · {Math.round(draft.powerKw * 1.36)} PS
+                </p>
+                <p className="mt-1 text-[11.5px] text-ink-faint">
+                  {profile.sizeLabel} · {profile.brandLabel}
+                </p>
+              </div>
+            </Card>
+            <VehicleImageCredit vehicle={draft} />
+
             <section>
               <SectionTitle title="Was es wert ist" />
               <Card>

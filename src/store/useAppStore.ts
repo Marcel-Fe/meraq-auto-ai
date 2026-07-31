@@ -24,6 +24,8 @@ interface Settings {
   userName: string
   hourlyRateEur: number
   onboardingDone: boolean
+  /** Darf die App ein frei lizenziertes Fahrzeugfoto aus dem Netz holen? */
+  webImages: boolean
 }
 
 interface AppState {
@@ -141,6 +143,7 @@ const defaultSettings: Settings = {
   userName: '',
   hourlyRateEur: 110,
   onboardingDone: false,
+  webImages: true,
 }
 
 export const useAppStore = create<AppState>()(
@@ -414,7 +417,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 5,
+      version: 6,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -452,6 +455,15 @@ export const useAppStore = create<AppState>()(
         // v4 → v5: gemerkte Foto-Analysen aus dem Teilefinder kamen dazu
         if (from < 5) {
           state = { ...state, partScans: state.partScans ?? [] }
+        }
+
+        // v5 → v6: Fahrzeugbilder aus freien Quellen. Bestandsnutzer bekommen die
+        // Funktion aktiv, können sie aber in den Einstellungen abschalten.
+        if (from < 6) {
+          state = {
+            ...state,
+            settings: { ...state.settings, webImages: state.settings?.webImages ?? true },
+          }
         }
 
         return state

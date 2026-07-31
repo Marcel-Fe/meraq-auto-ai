@@ -28,7 +28,7 @@ import {
   Sheet,
   cn,
 } from '../../components/ui'
-import { VehicleImage } from '../../components/VehicleCard'
+import { VehicleImage, VehicleImageCredit } from '../../components/VehicleCard'
 import { useActiveVehicle, useAppStore } from '../../store/useAppStore'
 import { formatDate, formatKm, formatRelative } from '../../lib/format'
 import { fileToDataUrl } from '../../lib/fileStore'
@@ -126,6 +126,7 @@ export default function VehicleScreen() {
               <Camera size={16} />
             </button>
           </div>
+          <VehicleImageCredit vehicle={vehicle} className="mb-3 px-2" />
           <h2 className="text-[23px] font-bold">
             {vehicle.make} {vehicle.model}
           </h2>

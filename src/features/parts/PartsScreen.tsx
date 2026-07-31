@@ -14,12 +14,13 @@ import {
   cn,
 } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
+import { VehicleImage, VehicleImageCredit } from '../../components/VehicleCard'
 import { PART_CATEGORIES, partsFor } from '../../data/parts'
 import { formatEurCents } from '../../lib/format'
 import { vehicleProfile } from '../../lib/vehicleProfile'
 import { useActiveVehicle } from '../../store/useAppStore'
 import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
-import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
+import { SYSTEM_PART_LOOKUP, vehicleContext } from '../../lib/ai/prompts'
 import type { Part } from '../../types'
 
 export default function PartsScreen() {
@@ -60,18 +61,18 @@ export default function PartsScreen() {
     let acc = ''
     try {
       await askClaude({
-        system: SYSTEM_ASSISTANT,
+        system: SYSTEM_PART_LOOKUP,
         context: vehicleContext(vehicle),
         messages: [
           {
             role: 'user',
             content:
-              `Ich brauche das Teil "${part.name}" für mein Fahrzeug.\n\n` +
-              `Sage mir: 1) Welche Angaben Du brauchst, um die exakte Teilenummer zu bestimmen ` +
-              `(z. B. Motorcode, Bauzeitraum, Ausstattung). 2) Wo ich diese Angaben an meinem ` +
-              `Fahrzeug oder in den Papieren finde. 3) Worauf ich bei der Auswahl achten muss.\n\n` +
-              `Wenn Du die Teilenummer nicht sicher weißt, nenne sie NICHT – sage stattdessen, ` +
-              `wie ich sie über die Fahrgestellnummer beim Teilehändler oder Hersteller ermittle.`,
+              `Ich brauche das Teil "${part.name}" (Kategorie ${part.category}) für mein Fahrzeug.\n\n` +
+              (vehicle.vin
+                ? `Meine Fahrgestellnummer lautet ${vehicle.vin} – sage mir, was sich daraus ableiten lässt.\n\n`
+                : `Meine Fahrgestellnummer habe ich noch nicht eingetragen.\n\n`) +
+              `Welche Ausführung brauche ich, welche Hersteller kommen infrage, worin ` +
+              `unterscheiden sich die Varianten und woran erkenne ich die richtige?`,
           },
         ],
         onText: (d) => {
@@ -95,6 +96,22 @@ export default function PartsScreen() {
       />
 
       <div className="anim-fade-up space-y-4">
+        <Card className="flex items-center gap-3">
+          <VehicleImage vehicle={vehicle} className="h-16 w-[40%] shrink-0 rounded-xl" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[14.5px] font-semibold">
+              {vehicle.make} {vehicle.model}
+            </p>
+            <p className="mt-0.5 text-[12px] text-ink-muted">
+              {vehicle.year} · {vehicle.fuel} · {Math.round(vehicle.powerKw * 1.36)} PS
+            </p>
+            <p className="mt-1 text-[11.5px] text-ink-faint">
+              {allParts.length} Teile passen zu diesem Fahrzeug
+            </p>
+          </div>
+        </Card>
+        <VehicleImageCredit vehicle={vehicle} />
+
         <div className="relative">
           <Search size={17} className="absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-faint" />
           <Input
@@ -221,15 +238,22 @@ export default function PartsScreen() {
                 )}
               </Card>
             ) : (
-              <Button
-                full
-                variant="outline"
-                loading={loading}
-                icon={<Sparkles size={16} />}
-                onClick={() => findPartNumber(selected)}
-              >
-                Passendes Teil für mein Fahrzeug finden
-              </Button>
+              <div>
+                <Button
+                  full
+                  variant="outline"
+                  loading={loading}
+                  icon={<Sparkles size={16} />}
+                  onClick={() => findPartNumber(selected)}
+                >
+                  Passendes Teil für mein Fahrzeug finden
+                </Button>
+                <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+                  {vehicle.vin
+                    ? 'Deine Fahrgestellnummer wird mitgeschickt – damit wird die Auskunft konkreter.'
+                    : 'Trage Deine Fahrgestellnummer beim Fahrzeug ein, dann kann die KI die Ausführung genauer eingrenzen.'}
+                </p>
+              </div>
             )}
 
             <Card>

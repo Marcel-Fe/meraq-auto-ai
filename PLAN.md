@@ -79,9 +79,15 @@ Erledigt ✅
    (P1xxx) kommen bewusst NICHT in die Liste — sie bedeuten je Hersteller etwas anderes;
    eingetippt werden sie weiterhin von der KI mit Fahrzeugkontext erklärt.
 
+8. **Echtes Fahrzeugbild** ✅ (auf Wunsch vorgezogen) — die App sucht zum angelegten
+   Fahrzeug ein frei lizenziertes Foto der Modellreihe (Wikimedia Commons), speichert es
+   verkleinert auf dem Gerät und zeigt es auf Startseite, Fahrzeug-, Teile- und
+   Nachschlagen-Screen mit Urheber und Lizenz. Abschaltbar in den Einstellungen.
+   Der Treffer wird auf Plausibilität geprüft — lieber kein Bild als ein falsches.
+
 Als Nächstes, nach Nutzen pro Aufwand:
 
-8. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
+9. **Mehrere Fahrzeuge im Vergleich** — Kosten und Wert nebeneinander.
 
 ## Phase 3 — Ausbau
 

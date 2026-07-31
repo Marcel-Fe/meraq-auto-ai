@@ -112,8 +112,12 @@ Diese Unterscheidung ist ein Produktversprechen und muss in jeder Weiterentwickl
   Stattdessen: schematischer Bauteil-Explorer mit antippbaren Zonen und KI-Vertiefung.
 - **Werkstattsuche** — Beispieldatensatz, keine echten Betriebe. Für eine echte Umkreissuche
   bräuchte es eine Karten-Schnittstelle (Google Places, Overpass).
-- **Fahrzeugfotos** — statt fremder Pressefotos eine eigene SVG-Silhouette; der Nutzer kann
-  ein eigenes Foto hinterlegen.
+- **Fahrzeugfotos** — Pressefotos der Hersteller sind urheberrechtlich geschützt und dürfen
+  nicht angezeigt werden. Stattdessen sucht die App ein **frei lizenziertes Foto** der
+  Modellreihe über Wikimedia Commons ([src/lib/vehicleImage.ts](src/lib/vehicleImage.ts)),
+  speichert es verkleinert auf dem Gerät und nennt Urheber und Lizenz am Bild. Findet sie
+  keins, bleibt die SVG-Silhouette. Ein eigenes Foto des Nutzers hat immer Vorrang, und in
+  den Einstellungen lässt sich die Suche abschalten.
 
 ## Verweise
 
