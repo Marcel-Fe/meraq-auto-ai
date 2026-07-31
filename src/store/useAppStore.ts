@@ -500,6 +500,14 @@ export const useVehicleActivities = () =>
     useShallow((s) => s.activities.filter((a) => a.vehicleId === s.activeVehicleId).sort(byDateDesc)),
   )
 
+/**
+ * Alle Aktivitäten, unabhängig vom aktiven Fahrzeug – Grundlage des Vergleichs
+ * mehrerer Fahrzeuge. Hier ohne `useShallow`: Der Selektor filtert und sortiert
+ * nicht, sondern reicht das Array unverändert aus dem Store durch. Die Referenz
+ * bleibt damit stabil. Gefiltert wird erst in `compareVehicles()`.
+ */
+export const useAllActivities = () => useAppStore((s) => s.activities)
+
 export const useVehicleDiagnoses = () =>
   useAppStore(
     useShallow((s) => s.diagnoses.filter((d) => d.vehicleId === s.activeVehicleId).sort(byDateDesc)),
