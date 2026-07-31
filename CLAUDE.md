@@ -100,6 +100,7 @@ npm run preview        # Server auf http://localhost:4173/meraq-auto-ai/
 npm run test:smoke     # 23 Screens im iPhone-Format, Screenshots in screenshots/
 npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 npm run test:ai        # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
+npm run test:workshops # Werkstattsuche mit abgefangenen Karten-Antworten
 ```
 
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz

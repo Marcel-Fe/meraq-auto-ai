@@ -266,6 +266,39 @@ export interface RepairJob {
   note?: string
 }
 
+/**
+ * Ein echter Betrieb aus OpenStreetMap.
+ *
+ * Bewusst getrennt vom Beispiel-Typ `Workshop`: OSM kennt weder Bewertungen noch
+ * Stundensätze. Was es nicht gibt, darf hier kein Feld haben – sonst wäre die
+ * Versuchung groß, es zu erfinden.
+ */
+export interface FoundWorkshop {
+  id: string
+  name: string
+  /** OSM-Wert von `shop`, z. B. car_repair oder tyres */
+  kind: string
+  street?: string
+  city?: string
+  phone?: string
+  website?: string
+  /** Öffnungszeiten im OSM-Format, z. B. "Mo-Fr 07:00-17:00" */
+  openingHours?: string
+  lat: number
+  lon: number
+  /** Luftlinie ab dem Suchmittelpunkt */
+  distanceKm: number
+}
+
+/** Letzte erfolgreiche Umkreissuche – damit beim nächsten Öffnen sofort etwas dasteht */
+export interface WorkshopSearch {
+  at: string
+  lat: number
+  lon: number
+  radiusKm: number
+  results: FoundWorkshop[]
+}
+
 export interface Workshop {
   id: string
   name: string

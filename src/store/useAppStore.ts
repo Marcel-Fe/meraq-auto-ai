@@ -11,6 +11,7 @@ import type {
   QuoteItem,
   Vehicle,
   VehicleDocument,
+  WorkshopSearch,
 } from '../types'
 import { demoActivities, demoDiagnoses, demoVehicle } from '../data/demoVehicle'
 import { defaultMaintenance } from '../lib/maintenance'
@@ -48,6 +49,8 @@ interface AppState {
   quotes: Quote[]
   threads: ChatThread[]
   activeThreadId: string | null
+  /** Letzte Werkstattsuche – der Kartendienst ist zeitweise überlastet, dann steht wenigstens das da */
+  workshopSearch: WorkshopSearch | null
   settings: Settings
 
   // Fahrzeuge
@@ -95,6 +98,9 @@ interface AppState {
   appendMessage: (threadId: string, msg: ChatThread['messages'][number]) => void
   patchMessage: (threadId: string, msgId: string, patch: Partial<ChatThread['messages'][number]>) => void
 
+  // Werkstattsuche
+  setWorkshopSearch: (search: WorkshopSearch | null) => void
+
   // Einstellungen
   updateSettings: (patch: Partial<Settings>) => void
   resetAll: () => void
@@ -112,6 +118,7 @@ function seedState() {
     quotes: [] as Quote[],
     threads: [] as ChatThread[],
     activeThreadId: null,
+    workshopSearch: null as WorkshopSearch | null,
   }
 }
 
@@ -424,13 +431,15 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
+      setWorkshopSearch: (search) => set({ workshopSearch: search }),
+
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       resetAll: () => set({ ...seedState(), settings: { ...defaultSettings, onboardingDone: true } }),
     }),
     {
       name: 'meraq-auto-ai',
-      version: 7,
+      version: 8,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -494,6 +503,11 @@ export const useAppStore = create<AppState>()(
               googleModel: s.googleModel ?? defaultSettings.googleModel,
             },
           }
+        }
+
+        // v7 → v8: Die Werkstattsuche merkt sich ihr letztes Ergebnis
+        if (from < 8) {
+          state = { ...state, workshopSearch: state.workshopSearch ?? null }
         }
 
         return state

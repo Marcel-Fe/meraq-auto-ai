@@ -111,8 +111,12 @@ Diese Unterscheidung ist ein Produktversprechen und muss in jeder Weiterentwickl
   Stattdessen: Fehlercode eintragen, App erklärt ihn (Datenbank + KI) und schätzt die Kosten.
 - **3D-Handbuch** — es gibt keine frei lizenzierten 3D-Fahrzeugmodelle.
   Stattdessen: schematischer Bauteil-Explorer mit antippbaren Zonen und KI-Vertiefung.
-- **Werkstattsuche** — Beispieldatensatz, keine echten Betriebe. Für eine echte Umkreissuche
-  bräuchte es eine Karten-Schnittstelle (Google Places, Overpass).
+- **Werkstattsuche** — echte Betriebe aus OpenStreetMap über Overpass, auf Knopfdruck im
+  gewählten Umkreis. Google Places wäre genauer, kostet aber Geld und bräuchte einen Server,
+  der den Schlüssel versteckt. Der öffentliche Overpass-Dienst ist ein Gemeinschaftsangebot
+  ohne Verfügbarkeitszusage — deshalb Wiederholversuch, gespeichertes Ergebnis und eine
+  ehrliche Meldung bei Überlastung. Bewertungen und Stundensätze fehlen in OSM und werden
+  deshalb bei echten Treffern nicht angezeigt.
 - **Fahrzeugfotos** — Pressefotos der Hersteller sind urheberrechtlich geschützt und dürfen
   nicht angezeigt werden. Stattdessen sucht die App ein **frei lizenziertes Foto** der
   Modellreihe über Wikimedia Commons ([src/lib/vehicleImage.ts](src/lib/vehicleImage.ts)),

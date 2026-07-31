@@ -104,10 +104,17 @@ Erledigt ✅
     kostenlosen Kontingent aus) steht offen in den Einstellungen.
     Geprüft mit `npm run test:ai` über abgefangene Antworten — ohne Guthabenverbrauch.
 
-## Phase 3 — Ausbau
+11. **Echte Werkstattsuche** ✅ — `/workshops` sucht auf Knopfdruck echte Betriebe im
+    Umkreis (5/10/25 km) über OpenStreetMap. Gesucht wird passend zum Fahrzeug: ein
+    Motorrad bekommt Motorradwerkstätten, ein Transporter auch Nutzfahrzeug-Betriebe.
+    Bewertungen und Stundensätze zeigt die App bei echten Treffern **nicht** — die
+    stehen nicht in den Daten und wären erfunden. ODbL-Namensnennung ist eingebaut.
+    Der öffentliche Overpass-Dienst weist etwa jede dritte Anfrage ab, deshalb: eine
+    einzige optimierte Abfrage (statt drei getrennter – das war der Unterschied
+    zwischen 1,6 s und Timeout), ein stiller Wiederholversuch und das letzte Ergebnis
+    bleibt gespeichert. Live gemessen: 3,6 s für 57 Betriebe. Store-Version 8.
 
-- **Echte Werkstattsuche** über eine Karten-Schnittstelle (Overpass ist kostenlos,
-  Google Places genauer aber kostenpflichtig)
+## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff
 - **Werkstattmodus** — mehrere Fahrzeuge, Kundenzuordnung, Auftragsverwaltung
