@@ -29,7 +29,7 @@ import { DTC_DB, SEVERITY_LABEL, isValidDtc, lookupDtc, normalizeDtc, searchDtc 
 import type { DtcInfo } from '../../lib/dtc'
 import { formatDate, formatRange, todayIso } from '../../lib/format'
 import { MONITORED_SYSTEMS } from '../../data/demoVehicle'
-import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
+import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_DTC, vehicleContext } from '../../lib/ai/prompts'
 import type { DtcSeverity } from '../../types'
 
@@ -83,13 +83,13 @@ export default function DiagnosisScreen() {
     setDetailId(entryId)
     setExplanation('')
     if (!hasApiKey()) {
-      setExplanation('_Für die ausführliche KI-Erklärung brauchst Du einen API-Schlüssel (Einstellungen)._')
+      setExplanation('_Für die ausführliche KI-Erklärung brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
       return
     }
     setExplaining(true)
     let acc = ''
     try {
-      await askClaude({
+      await askAi({
         system: SYSTEM_DTC,
         context: vehicleContext(vehicle, diagnoses),
         messages: [
@@ -368,7 +368,7 @@ export default function DiagnosisScreen() {
               </Card>
               {!hasApiKey() && (
                 <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                  API-Schlüssel eintragen
+                  Kostenlos einrichten
                 </Link>
               )}
             </div>

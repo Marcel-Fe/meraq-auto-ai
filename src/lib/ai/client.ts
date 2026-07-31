@@ -1,17 +1,21 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { useAppStore } from '../../store/useAppStore'
+import { useAppStore, type AiProvider } from '../../store/useAppStore'
 import { splitDataUrl } from '../fileStore'
+import { AiHttpError, askGoogle, askGoogleStructured, listGoogleModels } from './google'
 
 /**
- * Einziger Zugangspunkt zur Claude-API.
+ * Einziger Zugangspunkt zur KI – für beide Anbieter.
  *
- * Der Schlüssel des Nutzers liegt ausschließlich auf seinem Gerät (localStorage)
- * und wird direkt vom Browser an api.anthropic.com geschickt – kein eigener Server.
- * Deshalb ist `dangerouslyAllowBrowser` hier bewusst gesetzt: der Schlüssel gehört
- * dem Nutzer selbst und wird nirgendwo geteilt.
+ * **Google** ist der kostenlose Weg: Ein Schlüssel aus Google AI Studio kostet
+ * nichts und braucht keine Kreditkarte. **Anthropic** liefert die beste Qualität,
+ * kostet aber pro Anfrage.
  *
- * Das SDK wird erst beim ersten KI-Aufruf nachgeladen (~90 kB), damit der
- * App-Start auf dem Handy schnell bleibt.
+ * In beiden Fällen gilt dasselbe Versprechen: Der Schlüssel gehört dem Nutzer,
+ * liegt nur auf seinem Gerät und geht direkt an den Anbieter – MERAQ hat keinen
+ * Server dazwischen. Deshalb ist `dangerouslyAllowBrowser` bewusst gesetzt.
+ *
+ * Das Nachrichtenformat von Anthropic ist das Hausformat; der Google-Adapter
+ * übersetzt es. So kennt kein Feature-Screen zwei Anbieter.
  */
 
 export class MissingApiKeyError extends Error {
@@ -28,20 +32,31 @@ function loadSdk() {
   return sdkPromise
 }
 
-async function createClient(apiKey?: string) {
-  const key = (apiKey ?? useAppStore.getState().settings.apiKey).trim()
-  if (!key) throw new MissingApiKeyError()
+/** Welcher Anbieter ist eingestellt, mit welchem Schlüssel und Modell? */
+function current(): { provider: AiProvider; key: string; model: string } {
+  const s = useAppStore.getState().settings
+  return s.provider === 'google'
+    ? { provider: 'google', key: s.googleApiKey.trim(), model: s.googleModel }
+    : { provider: 'anthropic', key: s.apiKey.trim(), model: s.model }
+}
+
+async function createAnthropic(apiKey: string) {
   const Sdk = await loadSdk()
-  return new Sdk({ apiKey: key, dangerouslyAllowBrowser: true })
+  return new Sdk({ apiKey, dangerouslyAllowBrowser: true })
 }
 
 export function hasApiKey() {
-  return useAppStore.getState().settings.apiKey.trim().length > 0
+  return current().key.length > 0
+}
+
+/** Name des eingestellten Anbieters für die Anzeige */
+export function providerLabel(provider: AiProvider = current().provider) {
+  return provider === 'google' ? 'Google Gemini' : 'Anthropic Claude'
 }
 
 export interface AskOptions {
   system: string
-  /** Wird als eigener, zwischengespeicherter System-Block angehängt */
+  /** Wird bei Anthropic als eigener, zwischengespeicherter System-Block angehängt */
   context?: string
   messages: Anthropic.MessageParam[]
   maxTokens?: number
@@ -52,25 +67,34 @@ export interface AskOptions {
 /**
  * Streamt eine Antwort und liefert den vollständigen Text zurück.
  *
- * Prompt-Caching: System-Prompt und Fahrzeugkontext ändern sich zwischen
- * Nachrichten nicht, deshalb liegt der cache_control-Breakpoint auf dem letzten
- * System-Block. Alles Wechselnde (die eigentliche Frage) steht danach.
+ * Prompt-Caching bei Anthropic: System-Prompt und Fahrzeugkontext ändern sich
+ * zwischen Nachrichten nicht, deshalb liegt der cache_control-Breakpoint auf dem
+ * letzten System-Block. Alles Wechselnde (die eigentliche Frage) steht danach.
+ * Google übernimmt das Zwischenspeichern selbst.
  */
-export async function askClaude(opts: AskOptions): Promise<string> {
-  const client = await createClient()
-  const model = useAppStore.getState().settings.model
+export async function askAi(opts: AskOptions): Promise<string> {
+  const { provider, key, model } = current()
+  if (!key) throw new MissingApiKeyError()
 
+  if (provider === 'google') {
+    return askGoogle({
+      apiKey: key,
+      model,
+      system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
+      messages: opts.messages,
+      maxTokens: opts.maxTokens ?? 2048,
+      signal: opts.signal,
+      onText: opts.onText,
+    })
+  }
+
+  const client = await createAnthropic(key)
   const system: Anthropic.TextBlockParam[] = [{ type: 'text', text: opts.system }]
   if (opts.context) system.push({ type: 'text', text: opts.context })
   system[system.length - 1].cache_control = { type: 'ephemeral' }
 
   const stream = client.messages.stream(
-    {
-      model,
-      max_tokens: opts.maxTokens ?? 2048,
-      system,
-      messages: opts.messages,
-    },
+    { model, max_tokens: opts.maxTokens ?? 2048, system, messages: opts.messages },
     { signal: opts.signal },
   )
 
@@ -88,9 +112,9 @@ export async function askClaude(opts: AskOptions): Promise<string> {
  *
  * Umgesetzt über einen erzwungenen Werkzeugaufruf: Das Modell muss das Werkzeug
  * benutzen und liefert damit garantiert gültiges JSON nach dem übergebenen Schema –
- * zuverlässiger, als JSON aus einem Fließtext zu parsen.
+ * zuverlässiger, als JSON aus einem Fließtext zu parsen. Beide Anbieter können das.
  */
-export async function askClaudeStructured<T>(opts: {
+export async function askAiStructured<T>(opts: {
   system: string
   context?: string
   messages: Anthropic.MessageParam[]
@@ -100,9 +124,24 @@ export async function askClaudeStructured<T>(opts: {
   maxTokens?: number
   signal?: AbortSignal
 }): Promise<T> {
-  const client = await createClient()
-  const model = useAppStore.getState().settings.model
+  const { provider, key, model } = current()
+  if (!key) throw new MissingApiKeyError()
 
+  if (provider === 'google') {
+    return askGoogleStructured<T>({
+      apiKey: key,
+      model,
+      system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
+      messages: opts.messages,
+      maxTokens: opts.maxTokens ?? 2048,
+      signal: opts.signal,
+      toolName: opts.toolName,
+      toolDescription: opts.toolDescription,
+      schema: opts.schema,
+    })
+  }
+
+  const client = await createAnthropic(key)
   const system: Anthropic.TextBlockParam[] = [{ type: 'text', text: opts.system }]
   if (opts.context) system.push({ type: 'text', text: opts.context })
   system[system.length - 1].cache_control = { type: 'ephemeral' }
@@ -114,11 +153,7 @@ export async function askClaudeStructured<T>(opts: {
       system,
       messages: opts.messages,
       tools: [
-        {
-          name: opts.toolName,
-          description: opts.toolDescription,
-          input_schema: opts.schema,
-        },
+        { name: opts.toolName, description: opts.toolDescription, input_schema: opts.schema },
       ],
       tool_choice: { type: 'tool', name: opts.toolName },
     },
@@ -162,23 +197,30 @@ export function userMessage(text: string, imageDataUrl?: string): Anthropic.Mess
  */
 export function describeAiError(err: unknown): string {
   if (err instanceof MissingApiKeyError) {
-    return 'Es ist noch kein API-Schlüssel hinterlegt. Trage ihn in den Einstellungen ein, dann kann der Assistent antworten.'
+    return 'Es ist noch kein API-Schlüssel hinterlegt. Trage ihn in den Einstellungen ein – bei Google bekommst Du ihn kostenlos.'
   }
   if (err instanceof DOMException && err.name === 'AbortError') return 'Abgebrochen.'
   if (isAbortName(err)) return 'Abgebrochen.'
 
   const status = getStatus(err)
+  const text = messageOf(err)
+
+  // Google meldet einen ungültigen Schlüssel mit 400 statt 401
+  if (status === 400 && /api[- ]key not valid|api key expired|invalid api key/i.test(text)) {
+    return 'Der Schlüssel wurde abgelehnt. Prüfe ihn in den Einstellungen – bei Google findest Du ihn unter aistudio.google.com/apikey.'
+  }
+
   switch (status) {
     case 401:
-      return 'Der API-Schlüssel wurde abgelehnt. Bitte prüfe ihn in den Einstellungen – er beginnt mit "sk-ant-".'
+      return 'Der API-Schlüssel wurde abgelehnt. Bitte prüfe ihn in den Einstellungen.'
     case 403:
       return 'Dieser Schlüssel hat keinen Zugriff auf das gewählte Modell. Wähle in den Einstellungen ein anderes Modell.'
     case 404:
       return 'Das gewählte Modell ist für diesen Schlüssel nicht verfügbar. Wähle in den Einstellungen ein anderes Modell.'
     case 429:
-      return 'Zu viele Anfragen in kurzer Zeit oder Guthaben aufgebraucht. Warte einen Moment und versuche es erneut.'
+      return 'Zu viele Anfragen in kurzer Zeit oder das Kontingent ist aufgebraucht. Warte einen Moment und versuche es erneut.'
     case 400:
-      return `Die Anfrage wurde abgelehnt: ${messageOf(err)}`
+      return `Die Anfrage wurde abgelehnt: ${text}`
     case 500:
     case 502:
     case 503:
@@ -186,13 +228,14 @@ export function describeAiError(err: unknown): string {
       return 'Die KI ist gerade überlastet. Bitte in einer Minute noch einmal versuchen.'
   }
 
-  if (err instanceof Error && /network|fetch|connection/i.test(err.message)) {
+  if (err instanceof Error && /network|fetch|connection|failed to fetch/i.test(err.message)) {
     return 'Keine Verbindung zur KI. Prüfe Deine Internetverbindung und versuche es noch einmal.'
   }
   return 'Unerwarteter Fehler bei der KI-Anfrage. Bitte noch einmal versuchen.'
 }
 
 function getStatus(err: unknown): number | undefined {
+  if (err instanceof AiHttpError) return err.status
   if (err && typeof err === 'object' && 'status' in err) {
     const s = (err as { status?: unknown }).status
     if (typeof s === 'number') return s
@@ -208,10 +251,42 @@ function isAbortName(err: unknown) {
   return err instanceof Error && (err.name === 'AbortError' || err.name === 'APIUserAbortError')
 }
 
-/** Prüft einen Schlüssel mit einer minimalen Anfrage */
-export async function verifyApiKey(apiKey: string, model: string): Promise<{ ok: boolean; message: string }> {
+export interface KeyCheck {
+  ok: boolean
+  message: string
+  /** Bei Google: die zum Schlüssel verfügbaren Modelle */
+  models?: { id: string; label: string }[]
+}
+
+/**
+ * Prüft einen Schlüssel mit einer minimalen Anfrage.
+ *
+ * Bei Google wird zusätzlich die Modell-Liste geholt: Google benennt Modelle
+ * regelmäßig um, und ein fest hinterlegter Name wäre erst beim ersten echten
+ * Aufruf als Fehler sichtbar.
+ */
+export async function verifyApiKey(
+  provider: AiProvider,
+  apiKey: string,
+  model: string,
+): Promise<KeyCheck> {
   try {
-    const client = await createClient(apiKey)
+    if (provider === 'google') {
+      const models = await listGoogleModels(apiKey)
+      if (!models.length) {
+        return { ok: false, message: 'Der Schlüssel liefert keine nutzbaren Modelle zurück.' }
+      }
+      const known = models.some((m) => m.id === model)
+      return {
+        ok: true,
+        models,
+        message: known
+          ? `Schlüssel funktioniert. ${models.length} Modelle verfügbar.`
+          : `Schlüssel funktioniert. Das eingestellte Modell gibt es nicht mehr – wähle unten eines der ${models.length} verfügbaren.`,
+      }
+    }
+
+    const client = await createAnthropic(apiKey)
     await client.messages.create({
       model,
       max_tokens: 8,

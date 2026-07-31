@@ -27,7 +27,7 @@ import {
 import { useActiveVehicle, useAppStore, useVehiclePartScans } from '../../store/useAppStore'
 import { deleteFile, fileToDataUrl, getFile, putFile } from '../../lib/fileStore'
 import { formatDate, todayIso, uid } from '../../lib/format'
-import { askClaudeStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
+import { askAiStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
 import { SYSTEM_PART_FINDER, vehicleContext } from '../../lib/ai/prompts'
 import type { DetectedPart, PartScan } from '../../types'
 
@@ -161,7 +161,7 @@ export default function PartFinderScreen() {
   const analyse = async () => {
     if (!image) return
     if (!hasApiKey()) {
-      setError('Dafür brauchst Du einen API-Schlüssel. Du trägst ihn in den Einstellungen ein.')
+      setError('Dafür brauchst Du einen KI-Schlüssel. Bei Google bekommst Du ihn kostenlos – eintragen in den Einstellungen.')
       return
     }
     setLoading(true)
@@ -173,7 +173,7 @@ export default function PartFinderScreen() {
           `Markiere dieses Teil, falls es zu sehen ist, und zusätzlich die wichtigsten anderen Bauteile im Bild.`
         : 'Welche Bauteile sind auf diesem Foto meines Fahrzeugs zu sehen? Markiere die wichtigsten.'
 
-      const res = await askClaudeStructured<FindResult>({
+      const res = await askAiStructured<FindResult>({
         system: SYSTEM_PART_FINDER,
         context: vehicleContext(vehicle),
         messages: [userMessage(prompt, image)],
@@ -379,7 +379,7 @@ export default function PartFinderScreen() {
                 <p className="text-[13px] text-danger">{error}</p>
                 {!hasApiKey() && (
                   <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                    API-Schlüssel eintragen
+                    Kostenlos einrichten
                   </Link>
                 )}
               </Card>

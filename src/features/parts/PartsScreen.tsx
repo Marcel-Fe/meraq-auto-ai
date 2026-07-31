@@ -19,7 +19,7 @@ import { PART_CATEGORIES, partsFor } from '../../data/parts'
 import { formatEurCents } from '../../lib/format'
 import { vehicleProfile } from '../../lib/vehicleProfile'
 import { useActiveVehicle } from '../../store/useAppStore'
-import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
+import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_PART_LOOKUP, vehicleContext } from '../../lib/ai/prompts'
 import type { Part } from '../../types'
 
@@ -54,13 +54,13 @@ export default function PartsScreen() {
   const findPartNumber = async (part: Part) => {
     setLookup('')
     if (!hasApiKey()) {
-      setLookup('_Für die Teilenummer-Suche brauchst Du einen API-Schlüssel (Einstellungen)._')
+      setLookup('_Für die Teilenummer-Suche brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
       return
     }
     setLoading(true)
     let acc = ''
     try {
-      await askClaude({
+      await askAi({
         system: SYSTEM_PART_LOOKUP,
         context: vehicleContext(vehicle),
         messages: [
@@ -233,7 +233,7 @@ export default function PartsScreen() {
                 </div>
                 {!hasApiKey() && (
                   <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                    API-Schlüssel eintragen
+                    Kostenlos einrichten
                   </Link>
                 )}
               </Card>

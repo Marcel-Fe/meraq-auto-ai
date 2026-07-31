@@ -6,7 +6,7 @@ import { Badge, Button, Card, EstimateNote, Segmented, Sheet } from '../../compo
 import { Markdown } from '../../components/Markdown'
 import { manualZonesFor } from '../../data/manual'
 import type { ManualHotspot } from '../../types'
-import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
+import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
 import { useActiveVehicle } from '../../store/useAppStore'
 import { ZoneScene } from './ZoneScene'
@@ -26,16 +26,16 @@ export default function ManualScreen() {
 
   const zone = zones.find((z) => z.id === zoneId) ?? zones[0]
 
-  const askAi = async (hotspot: ManualHotspot) => {
+  const explainHotspot = async (hotspot: ManualHotspot) => {
     if (!hasApiKey()) {
-      setAnswer('_Für die KI-Vertiefung brauchst Du einen API-Schlüssel (Einstellungen)._')
+      setAnswer('_Für die KI-Vertiefung brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
       return
     }
     setLoading(true)
     setAnswer('')
     let acc = ''
     try {
-      await askClaude({
+      await askAi({
         system: SYSTEM_ASSISTANT,
         context: vehicleContext(vehicle),
         messages: [
@@ -197,7 +197,7 @@ export default function ManualScreen() {
                     to="/settings"
                     className="mt-2 inline-block text-[13px] font-medium text-brand-blue"
                   >
-                    API-Schlüssel eintragen
+                    Kostenlos einrichten
                   </Link>
                 )}
               </Card>
@@ -207,7 +207,7 @@ export default function ManualScreen() {
                 variant="outline"
                 loading={loading}
                 icon={<Sparkles size={16} />}
-                onClick={() => askAi(spot)}
+                onClick={() => explainHotspot(spot)}
               >
                 KI fragen: Was heißt das für mein Fahrzeug?
               </Button>

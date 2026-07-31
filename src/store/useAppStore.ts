@@ -18,9 +18,18 @@ import { todayIso, uid } from '../lib/format'
 
 export type AiModel = 'claude-sonnet-5' | 'claude-opus-5' | 'claude-haiku-4-5-20251001'
 
+/** Google ist der kostenlose Weg, Anthropic der für die beste Qualität */
+export type AiProvider = 'google' | 'anthropic'
+
 interface Settings {
+  provider: AiProvider
+  /** Anthropic-Schlüssel (beginnt mit sk-ant-) */
   apiKey: string
   model: AiModel
+  /** Schlüssel aus Google AI Studio – kostenlos, ohne Kreditkarte */
+  googleApiKey: string
+  /** Modellname bei Google, z. B. gemini-flash-latest */
+  googleModel: string
   userName: string
   hourlyRateEur: number
   onboardingDone: boolean
@@ -138,8 +147,12 @@ function mergeMaintenance(existing: MaintenanceItem[], vehicle: Vehicle): Mainte
 }
 
 const defaultSettings: Settings = {
+  // Vorgabe ist der kostenlose Weg – niemand soll für einen ersten Eindruck zahlen müssen
+  provider: 'google',
   apiKey: '',
   model: 'claude-sonnet-5',
+  googleApiKey: '',
+  googleModel: 'gemini-flash-latest',
   userName: '',
   hourlyRateEur: 110,
   onboardingDone: false,
@@ -417,7 +430,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 6,
+      version: 7,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -463,6 +476,23 @@ export const useAppStore = create<AppState>()(
           state = {
             ...state,
             settings: { ...state.settings, webImages: state.settings?.webImages ?? true },
+          }
+        }
+
+        // v6 → v7: Die KI läuft jetzt wahlweise über Google (kostenlos) oder Anthropic.
+        // Wer schon einen Anthropic-Schlüssel hinterlegt hat, bleibt dort – ein stiller
+        // Anbieterwechsel würde einen laufenden Assistenten unbrauchbar machen.
+        if (from < 7) {
+          const s = state.settings ?? defaultSettings
+          state = {
+            ...state,
+            settings: {
+              ...defaultSettings,
+              ...s,
+              provider: s.apiKey?.trim() ? 'anthropic' : 'google',
+              googleApiKey: s.googleApiKey ?? '',
+              googleModel: s.googleModel ?? defaultSettings.googleModel,
+            },
           }
         }
 

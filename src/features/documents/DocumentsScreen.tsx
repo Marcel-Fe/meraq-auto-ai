@@ -36,8 +36,8 @@ import {
 import { deleteFile, fileToDataUrl, getFile, putFile } from '../../lib/fileStore'
 import { formatDate, formatKm, formatRelative, todayIso, uid } from '../../lib/format'
 import {
-  askClaude,
-  askClaudeStructured,
+  askAi,
+  askAiStructured,
   describeAiError,
   hasApiKey,
   userMessage,
@@ -219,14 +219,14 @@ export default function DocumentsScreen() {
   const extract = async () => {
     if (!detail || !detailImage) return
     if (!hasApiKey()) {
-      setExtracted('_Zum Auslesen brauchst Du einen API-Schlüssel (Einstellungen)._')
+      setExtracted('_Zum Auslesen brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
       return
     }
     setExtracting(true)
     setExtracted('')
     let acc = ''
     try {
-      await askClaude({
+      await askAi({
         system: SYSTEM_DOCUMENT,
         context: vehicleContext(vehicle),
         messages: [
@@ -251,14 +251,14 @@ export default function DocumentsScreen() {
   const analyseInvoice = async () => {
     if (!detail || !detailImage || !vehicle) return
     if (!hasApiKey()) {
-      setInvoiceError('Zum Auswerten brauchst Du einen API-Schlüssel. Du trägst ihn in den Einstellungen ein.')
+      setInvoiceError('Zum Auswerten brauchst Du einen KI-Schlüssel. Bei Google bekommst Du ihn kostenlos – eintragen in den Einstellungen.')
       return
     }
     setInvoiceLoading(true)
     setInvoiceError('')
     setInvoiceNote('')
     try {
-      const res = await askClaudeStructured<InvoiceResult>({
+      const res = await askAiStructured<InvoiceResult>({
         system: SYSTEM_INVOICE,
         context: vehicleContext(vehicle),
         messages: [
@@ -505,7 +505,7 @@ export default function DocumentsScreen() {
                 </div>
                 {!hasApiKey() && (
                   <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                    API-Schlüssel eintragen
+                    Kostenlos einrichten
                   </Link>
                 )}
               </Card>
@@ -546,7 +546,7 @@ export default function DocumentsScreen() {
                 <p className="text-[13px] text-danger">{invoiceError}</p>
                 {!hasApiKey() && (
                   <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                    API-Schlüssel eintragen
+                    Kostenlos einrichten
                   </Link>
                 )}
               </Card>

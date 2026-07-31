@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import type Anthropic from '@anthropic-ai/sdk'
-import { askClaude, describeAiError, userMessage } from '../../lib/ai/client'
+import { askAi, describeAiError, userMessage } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, SYSTEM_VISION, vehicleContext } from '../../lib/ai/prompts'
 import { useAppStore, useActiveVehicle, useVehicleDiagnoses } from '../../store/useAppStore'
 import { todayIso, uid } from '../../lib/format'
@@ -64,7 +64,7 @@ export function useChat() {
 
       let acc = ''
       try {
-        await askClaude({
+        await askAi({
           system: image ? SYSTEM_VISION : SYSTEM_ASSISTANT,
           context: vehicleContext(vehicle, diagnoses),
           messages,

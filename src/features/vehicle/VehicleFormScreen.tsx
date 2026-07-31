@@ -9,7 +9,7 @@ import { vehicleProfile } from '../../lib/vehicleProfile'
 import { fileToDataUrl } from '../../lib/fileStore'
 import { decodeVin } from '../../lib/vin'
 import { formatEur } from '../../lib/format'
-import { askClaudeStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
+import { askAiStructured, describeAiError, hasApiKey, userMessage } from '../../lib/ai/client'
 import { SYSTEM_REGISTRATION } from '../../lib/ai/prompts'
 import { useAppStore } from '../../store/useAppStore'
 import type { Condition, FuelType, Transmission, Vehicle, VehicleKind } from '../../types'
@@ -178,7 +178,7 @@ export default function VehicleFormScreen() {
   const scan = async (file?: File) => {
     if (!file) return
     if (!hasApiKey()) {
-      setScanError('Zum Auslesen brauchst Du einen API-Schlüssel. Du trägst ihn in den Einstellungen ein.')
+      setScanError('Zum Auslesen brauchst Du einen KI-Schlüssel. Bei Google bekommst Du ihn kostenlos – eintragen in den Einstellungen.')
       return
     }
     setScanning(true)
@@ -186,7 +186,7 @@ export default function VehicleFormScreen() {
     setScanned(null)
     try {
       const image = await fileToDataUrl(file, 1800)
-      const res = await askClaudeStructured<RegistrationResult>({
+      const res = await askAiStructured<RegistrationResult>({
         system: SYSTEM_REGISTRATION,
         messages: [userMessage('Lies diesen Fahrzeugschein aus.', image)],
         toolName: 'fahrzeugschein_uebernehmen',
@@ -297,7 +297,7 @@ export default function VehicleFormScreen() {
             <p className="text-[13px] text-danger">{scanError}</p>
             {!hasApiKey() && (
               <Link to="/settings" className="mt-2 inline-block text-[13px] font-medium text-brand-blue">
-                API-Schlüssel eintragen
+                Kostenlos einrichten
               </Link>
             )}
           </Card>

@@ -5,7 +5,7 @@ import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, SectionTitle, cn } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
 import { GUIDES } from '../../data/guides'
-import { askClaude, describeAiError, hasApiKey } from '../../lib/ai/client'
+import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
 import { useActiveVehicle } from '../../store/useAppStore'
 
@@ -40,14 +40,14 @@ export default function GuideDetailScreen() {
 
   const askForVehicle = async () => {
     if (!hasApiKey()) {
-      setAnswer('_Für die KI-Antwort brauchst Du einen API-Schlüssel (Einstellungen)._')
+      setAnswer('_Für die KI-Antwort brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
       return
     }
     setLoading(true)
     setAnswer('')
     let acc = ''
     try {
-      await askClaude({
+      await askAi({
         system: SYSTEM_ASSISTANT,
         context: vehicleContext(vehicle),
         messages: [

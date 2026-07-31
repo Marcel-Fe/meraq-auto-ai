@@ -31,7 +31,7 @@ import { calculateCosts, calculateTax } from '../../lib/costs'
 import { formatEur, formatEurCents, formatRange } from '../../lib/format'
 import { valuate } from '../../lib/valuation'
 import { vehicleProfile } from '../../lib/vehicleProfile'
-import { askClaudeStructured, describeAiError, hasApiKey } from '../../lib/ai/client'
+import { askAiStructured, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_VEHICLE_FACTS, vehicleContext } from '../../lib/ai/prompts'
 import { useAppStore } from '../../store/useAppStore'
 import type { Condition, FuelType, Transmission, Vehicle, VehicleKind } from '../../types'
@@ -159,14 +159,14 @@ export default function LookupScreen() {
   const loadFacts = async () => {
     if (!draft) return
     if (!hasApiKey()) {
-      setError('Für den Steckbrief brauchst Du einen API-Schlüssel (Einstellungen).')
+      setError('Für den Steckbrief brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen).')
       return
     }
     setLoading(true)
     setError('')
     setFacts(undefined)
     try {
-      const res = await askClaudeStructured<Facts>({
+      const res = await askAiStructured<Facts>({
         system: SYSTEM_VEHICLE_FACTS,
         context: vehicleContext(draft),
         messages: [
@@ -418,7 +418,7 @@ export default function LookupScreen() {
                       {error}
                       {!hasApiKey() && (
                         <Link to="/settings" className="mt-1 block font-medium text-brand-blue">
-                          API-Schlüssel eintragen
+                          Kostenlos einrichten
                         </Link>
                       )}
                     </p>
