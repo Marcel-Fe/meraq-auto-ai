@@ -13,6 +13,7 @@
     "test:vehicles": "node scripts/test-vehicles.mjs",
     "test:ai": "node scripts/test-ai-providers.mjs",
     "test:workshops": "node scripts/test-workshops.mjs",
+    "test:image": "node --experimental-strip-types scripts/test-vehicle-image.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

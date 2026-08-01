@@ -1,5 +1,6 @@
 import type { Vehicle, VehicleWebImage } from '../types'
 import { fileToDataUrl } from './fileStore'
+import { mainImageFits, pickArticleImage, titleFits } from './vehicleImagePick'
 
 /**
  * Fahrzeugbild aus freien Quellen.
@@ -109,47 +110,25 @@ type WikiPage = {
   missing?: string
 }
 
-function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
 /**
- * Passt der gefundene Artikel überhaupt zum Fahrzeug?
+ * Sucht das passende Foto unter den Bildern des Artikels.
  *
- * Die Volltextsuche liefert sonst Nachbarmodelle – bei „Mercedes-Benz Sprinter"
- * zum Beispiel den Artikel über den Vario. Ein falsches Fahrzeugbild ist
- * schlimmer als gar keins, deshalb wird der Titel geprüft:
- * Das Modell muss vorkommen. Nur bei Modellnamen mit Ziffern („320d", „A4")
- * reicht die Marke – dort heißt der Artikel oft nach der Baureihe („BMW 3er").
+ * Das Hauptbild kommt als erster Kandidat mit hinein, statt es blind zu nehmen:
+ * Es ist oft ein historischer Vorgänger oder ein Bauteil. So entscheidet für alle
+ * Kandidaten dieselbe Prüfung, und bei gleicher Eignung gewinnt das Hauptbild.
  */
-function titleFits(title: string | undefined, vehicle: Vehicle) {
-  if (!title) return false
-  const t = normalize(title)
-  const model = normalize(vehicle.model)
-  const make = normalize(vehicle.make)
-  if (model && t.includes(model)) return true
-  const modelHasDigits = /\d/.test(vehicle.model)
-  return modelHasDigits && make.length > 0 && t.includes(make)
-}
-
-/**
- * Manche Fahrzeugartikel haben kein hinterlegtes Hauptbild – der Sprinter zum
- * Beispiel. Dann werden die Bilder des Artikels durchgesehen und das genommen,
- * dessen Dateiname zum Modell passt. Logos, Karten und Symbole fallen raus.
- */
-async function imageFromArticle(title: string, vehicle: Vehicle, signal?: AbortSignal) {
+async function imageFromArticle(
+  title: string,
+  vehicle: Vehicle,
+  mainImage?: string,
+  signal?: AbortSignal,
+) {
   const url =
     `${WIKIPEDIA}?action=query&format=json&origin=*&titles=${encodeURIComponent(title)}` +
     `&generator=images&gimlimit=30&prop=imageinfo&iiprop=url&redirects=1`
   const data = await getJson<{ query?: { pages?: Record<string, { title?: string }> } }>(url, signal)
-  const files = Object.values(data?.query?.pages ?? {})
-    .map((p) => p.title ?? '')
-    .filter((t) => /\.(jpe?g|png)$/i.test(t))
-    .filter((t) => !/(logo|icon|symbol|karte|map|wappen|flagge|commons|disambig|edit)/i.test(t))
-
-  const model = normalize(vehicle.model)
-  const matching = files.filter((t) => normalize(t).includes(model))
-  return (matching[0] ?? files[0])?.replace(/^(Datei|File):/i, '')
+  const files = Object.values(data?.query?.pages ?? {}).map((p) => p.title ?? '')
+  return pickArticleImage([...(mainImage ? [mainImage] : []), ...files], vehicle)
 }
 
 async function searchVehicleImage(
@@ -190,8 +169,10 @@ async function searchVehicleImage(
   }
   if (!page?.title) return null
 
-  if (!page.pageimage) {
-    page = { ...page, pageimage: await imageFromArticle(page.title, vehicle, signal) }
+  // Das Hauptbild nur dann direkt nehmen, wenn Marke und Modell darin vorkommen –
+  // sonst mit den übrigen Artikelbildern gemeinsam bewerten
+  if (!mainImageFits(page.pageimage, vehicle)) {
+    page = { ...page, pageimage: await imageFromArticle(page.title, vehicle, page.pageimage, signal) }
   }
   if (!page.pageimage) return null
 
