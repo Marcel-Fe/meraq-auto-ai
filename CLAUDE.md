@@ -53,6 +53,11 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 ### Daten und Ehrlichkeit
 - **Nie Zahlen erfinden.** Jede Schätzung braucht eine offengelegte Rechnung und einen
   sichtbaren Hinweis (Komponente `EstimateNote`).
+- **Kfz-Steuer ist kein Schätzwert.** Sie hängt an der **Erstzulassung**, nicht am heutigen
+  Recht: gestaffelte CO₂-Sätze erst ab 01.01.2021, davor linear 2,00 € je g/km mit
+  Freibetrag 95 (ab 2014), 110 (ab 2012) bzw. 120 g/km. Vor dem 01.07.2009 zählt die
+  Schadstoffklasse — die erfasst die App nicht, dort kommt ein Hinweis statt einer Zahl.
+  Änderungen an `calculateTax()` immer mit `npm run test:calc` belegen.
 - Keine echten Firmennamen, Bewertungen oder Öffnungszeiten erfinden.
 - Bei sicherheitsrelevanten Themen (Bremsen, Lenkung, Airbag, Reifen) immer zur Werkstatt raten —
   das gilt im UI-Text und in den KI-Prompts.
@@ -101,6 +106,8 @@ npm run test:smoke     # 23 Screens im iPhone-Format, Screenshots in screenshots
 npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 npm run test:ai        # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
 npm run test:workshops # Werkstattsuche mit abgefangenen Karten-Antworten
+npm run test:image     # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
+npm run test:calc      # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
 ```
 
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz

@@ -114,6 +114,15 @@ Erledigt ✅
     zwischen 1,6 s und Timeout), ein stiller Wiederholversuch und das letzte Ergebnis
     bleibt gespeichert. Live gemessen: 3,6 s für 57 Betriebe. Store-Version 8.
 
+12. **Kfz-Steuer nach Erstzulassung** ✅ — die App wandte die gestaffelten CO₂-Sätze auf
+    jedes Fahrzeug an. Die gelten aber erst ab Erstzulassung 01.01.2021; davor ist der
+    Satz linear (2,00 € je g/km), und der Freibetrag lag bei 95 (ab 2014), 110 (ab 2012)
+    bzw. 120 g/km. Ein Golf GTI von 2018 wurde dadurch mit 321 € statt 250 € berechnet —
+    71 € zu viel pro Jahr. Fahrzeuge mit Erstzulassung vor dem 01.07.2009 werden nach
+    Schadstoffklasse besteuert; dort nennt die App jetzt einen Hinweis statt einer Zahl.
+    Fehlt das Erstzulassungsdatum, dient das Baujahr als Näherung — sichtbar in der
+    Erklärung. Belegt mit `npm run test:calc` (22 Fälle, von Hand nachgerechnet).
+
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff

@@ -21,11 +21,22 @@ export interface TaxResult {
   explanation: string
 }
 
-/** Freibetrag: der CO₂-Anteil fällt erst oberhalb dieser Grenze an */
-const CO2_FREE_LIMIT = 95
+/**
+ * Der CO₂-Anteil hängt am Datum der **Erstzulassung**, nicht am heutigen Recht.
+ *
+ * Freibetrag und Satz wurden mehrfach geändert, und für ein Fahrzeug gilt immer
+ * die Fassung seiner Erstzulassung. Die gestaffelten Sätze gelten erst ab
+ * 01.01.2021 – davor wird linear mit 2,00 € je g/km gerechnet. Wer das übersieht,
+ * rechnet einem älteren Fahrzeug mit hohem CO₂-Wert deutlich zu viel an.
+ */
+interface Co2Rule {
+  freeLimit: number
+  /** Gestaffelte Sätze; bei linearer Besteuerung genügt eine Stufe */
+  tiers: { upTo: number; rate: number }[]
+  label: string
+}
 
-/** Gestaffelte Sätze in Euro je g/km über dem Freibetrag (seit 2021) */
-const CO2_TIERS: { upTo: number; rate: number }[] = [
+const STAGED_TIERS: { upTo: number; rate: number }[] = [
   { upTo: 115, rate: 2.0 },
   { upTo: 135, rate: 2.2 },
   { upTo: 155, rate: 2.5 },
@@ -33,6 +44,35 @@ const CO2_TIERS: { upTo: number; rate: number }[] = [
   { upTo: 195, rate: 3.4 },
   { upTo: Infinity, rate: 4.2 },
 ]
+
+const LINEAR_TIERS = [{ upTo: Infinity, rate: 2.0 }]
+
+/**
+ * Erstzulassung als Jahr und Monat.
+ * Fehlt das Datum, dient das Baujahr als Näherung – mit Jahresmitte, damit ein
+ * Fahrzeug aus 2009 nicht willkürlich in das eine oder andere System fällt.
+ */
+function registration(v: Vehicle): { year: number; month: number; exact: boolean } {
+  if (v.firstRegistration) {
+    const d = new Date(v.firstRegistration)
+    if (!Number.isNaN(d.getTime())) {
+      return { year: d.getFullYear(), month: d.getMonth() + 1, exact: true }
+    }
+  }
+  return { year: v.year, month: 7, exact: false }
+}
+
+/** Gibt null zurück, wenn das Fahrzeug nach altem Recht (Schadstoffklasse) besteuert wird */
+function co2RuleFor(v: Vehicle): Co2Rule | null {
+  const { year, month } = registration(v)
+  if (year < 2009 || (year === 2009 && month < 7)) return null
+  if (year >= 2021) {
+    return { freeLimit: 95, tiers: STAGED_TIERS, label: 'gestaffelt nach Höhe des Ausstoßes' }
+  }
+  if (year >= 2014) return { freeLimit: 95, tiers: LINEAR_TIERS, label: '2,00 € je g/km' }
+  if (year >= 2012) return { freeLimit: 110, tiers: LINEAR_TIERS, label: '2,00 € je g/km' }
+  return { freeLimit: 120, tiers: LINEAR_TIERS, label: '2,00 € je g/km' }
+}
 
 export function calculateTax(v: Vehicle): TaxResult {
   if (v.fuel === 'Elektro') {
@@ -74,15 +114,22 @@ export function calculateTax(v: Vehicle): TaxResult {
     return emptyTax('Für die Steuerberechnung fehlt der CO₂-Wert (Feld V.7 im Fahrzeugschein).')
   }
 
+  const rule = co2RuleFor(v)
+  if (!rule) {
+    return emptyTax(
+      'Fahrzeuge mit Erstzulassung vor dem 01.07.2009 werden nach Hubraum und Schadstoffklasse besteuert, nicht nach CO₂. Die Schadstoffklasse erfasst die App nicht – den genauen Betrag nennt der Kfz-Steuer-Rechner des Zolls.',
+    )
+  }
+
   // Hubraumanteil: je angefangene 100 cm³
   const perHundred = v.fuel === 'Diesel' ? 9.5 : 2.0
   const units = Math.ceil(v.displacementCcm / 100)
   const displacementPart = units * perHundred
 
-  // CO₂-Anteil: gestaffelt, jede Stufe nur für den Anteil in ihrem Bereich
+  // CO₂-Anteil: jede Stufe zählt nur für den Anteil in ihrem Bereich
   let co2Part = 0
-  let lower = CO2_FREE_LIMIT
-  for (const tier of CO2_TIERS) {
+  let lower = rule.freeLimit
+  for (const tier of rule.tiers) {
     if (v.co2GramPerKm <= lower) break
     const upper = Math.min(v.co2GramPerKm, tier.upTo)
     co2Part += (upper - lower) * tier.rate
@@ -90,6 +137,8 @@ export function calculateTax(v: Vehicle): TaxResult {
   }
 
   const yearly = displacementPart + co2Part
+  const reg = registration(v)
+  const num = (n: number) => n.toFixed(2).replace('.', ',')
 
   return {
     yearlyEur: round(yearly),
@@ -97,8 +146,12 @@ export function calculateTax(v: Vehicle): TaxResult {
     co2Part: round(co2Part),
     exempt: false,
     explanation:
-      `Hubraum: ${units} × 100 cm³ × ${perHundred.toFixed(2).replace('.', ',')} € (${v.fuel}) = ${round(displacementPart).toFixed(2).replace('.', ',')} €. ` +
-      `CO₂: ${v.co2GramPerKm} g/km, davon sind ${CO2_FREE_LIMIT} g/km frei, der Rest wird gestaffelt besteuert = ${round(co2Part).toFixed(2).replace('.', ',')} €.`,
+      `Hubraum: ${units} × 100 cm³ × ${num(perHundred)} € (${v.fuel}) = ${num(round(displacementPart))} €. ` +
+      `CO₂: ${v.co2GramPerKm} g/km, davon sind ${rule.freeLimit} g/km frei, der Rest wird ${rule.label} besteuert = ${num(round(co2Part))} €. ` +
+      `Maßgeblich ist die Fassung des Gesetzes zur Erstzulassung (${reg.year})` +
+      (reg.exact
+        ? '.'
+        : ' – hier aus dem Baujahr abgeleitet, weil kein Erstzulassungsdatum hinterlegt ist. Trage es in den Fahrzeugdaten ein, dann wird es genauer.'),
   }
 }
 
