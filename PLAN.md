@@ -38,7 +38,10 @@ Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
 - Smoke-Test über alle 23 Screens im iPhone-Format (`npm run test:smoke`)
-- Erststart-Bundle 98 kB gzip; KI-SDK und Charts werden erst bei Bedarf geladen
+- Erststart-Bundle 105 kB gzip; KI-SDK (42 kB), Charts (105 kB) und die 3D-Szene (148 kB)
+  werden erst bei Bedarf geladen. **Offen:** Der Commit zur Werkstattsuche hat den Erststart
+  von 86 auf 108 kB gebracht — Ursache noch nicht belegt, siehe Session-Prompt zum
+  3D-Bauteil-Explorer.
 
 ## Phase 2 — Tiefe
 
