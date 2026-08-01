@@ -326,9 +326,15 @@ export interface ManualZone {
 export interface ManualHotspot {
   id: string
   label: string
-  /** Position in Prozent der Szene */
+  /** Position in Prozent der schematischen 2D-Szene */
   x: number
   y: number
+  /**
+   * Position im 3D-Modell in Metern: X = Länge (positiv nach vorn),
+   * Y = Höhe über der Fahrbahn, Z = Breite (positiv nach rechts).
+   * Fehlt sie, taucht das Bauteil nur in der 2D-Ansicht auf.
+   */
+  pos3d?: [number, number, number]
   fn: string
   problems: string[]
   interval?: string

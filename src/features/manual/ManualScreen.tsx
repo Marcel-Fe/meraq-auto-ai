@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Crosshair, Info, Plus, Sparkles } from 'lucide-react'
+import { Box, ChevronRight, Crosshair, Info, Layers, Plus, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, EstimateNote, Segmented, Sheet } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
@@ -11,12 +11,30 @@ import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
 import { useActiveVehicle } from '../../store/useAppStore'
 import { ZoneScene } from './ZoneScene'
 
+// Three.js wiegt rund 150 kB gzip – erst laden, wenn die 3D-Ansicht wirklich gezeigt wird
+const CarScene3D = lazy(() => import('./CarScene3D'))
+
+/** Kann das Gerät WebGL? Ohne das bleibt es bei der schematischen Zeichnung. */
+function hasWebgl() {
+  try {
+    const canvas = document.createElement('canvas')
+    return !!(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
+
 export default function ManualScreen() {
   const vehicle = useActiveVehicle()
   const [zoneId, setZoneId] = useState<string | null>(null)
   const [spot, setSpot] = useState<ManualHotspot | null>(null)
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
+  const [use3d, setUse3d] = useState(true)
+  const [webglReady, setWebglReady] = useState(false)
+
+  // Erst nach dem ersten Rendern prüfen – auf dem Server gibt es kein document
+  useEffect(() => setWebglReady(hasWebgl()), [])
 
   // Zonen und Bauteile hängen vom Fahrzeug ab – ein E-Auto hat keinen Ölfilter,
   // ein Motorrad keinen Innenraum
@@ -25,6 +43,7 @@ export default function ManualScreen() {
   if (!vehicle || zones.length === 0) return null
 
   const zone = zones.find((z) => z.id === zoneId) ?? zones[0]
+  const show3d = use3d && webglReady && zone.hotspots.some((h) => h.pos3d)
 
   const explainHotspot = async (hotspot: ManualHotspot) => {
     if (!hasApiKey()) {
@@ -91,34 +110,63 @@ export default function ManualScreen() {
 
         <Card padded={false} className="overflow-hidden">
           <div className="relative aspect-[4/3] w-full">
-            <ZoneScene scene={zone.scene} />
-            {zone.hotspots.map((h) => (
+            {show3d ? (
+              <Suspense fallback={<div className="skeleton h-full w-full" />}>
+                <CarScene3D
+                  zone={zone.scene}
+                  kind={vehicle.kind}
+                  hotspots={zone.hotspots}
+                  selectedId={spot?.id}
+                  onSelect={(h) => {
+                    setSpot(h)
+                    setAnswer('')
+                  }}
+                />
+              </Suspense>
+            ) : (
+              <>
+                <ZoneScene scene={zone.scene} />
+                {zone.hotspots.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    aria-label={h.label}
+                    onClick={() => {
+                      setSpot(h)
+                      setAnswer('')
+                    }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                  >
+                    <span className="relative grid h-8 w-8 place-items-center">
+                      <span
+                        className="absolute inset-0 rounded-full bg-brand-teal/40"
+                        style={{ animation: 'meraq-pulse-ring 2.4s ease-out infinite' }}
+                      />
+                      <span className="relative grid h-6 w-6 place-items-center rounded-full border border-white/40 bg-brand-teal text-[#04121a] shadow-lg">
+                        <Plus size={13} strokeWidth={3} />
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {webglReady && (
               <button
-                key={h.id}
                 type="button"
-                aria-label={h.label}
-                onClick={() => {
-                  setSpot(h)
-                  setAnswer('')
-                }}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                onClick={() => setUse3d(!use3d)}
+                className="glass absolute top-2.5 right-2.5 flex min-h-[36px] items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold text-ink active:scale-95"
               >
-                <span className="relative grid h-8 w-8 place-items-center">
-                  <span
-                    className="absolute inset-0 rounded-full bg-brand-teal/40"
-                    style={{ animation: 'meraq-pulse-ring 2.4s ease-out infinite' }}
-                  />
-                  <span className="relative grid h-6 w-6 place-items-center rounded-full border border-white/40 bg-brand-teal text-[#04121a] shadow-lg">
-                    <Plus size={13} strokeWidth={3} />
-                  </span>
-                </span>
+                {show3d ? <Layers size={14} /> : <Box size={14} />}
+                {show3d ? '2D' : '3D'}
               </button>
-            ))}
+            )}
           </div>
           <div className="border-t border-white/8 px-4 py-3">
             <p className="text-[13px] text-ink-muted">
-              {zone.hotspots.length} Bauteile · tippe einen Punkt an
+              {zone.hotspots.length} Bauteile ·{' '}
+              {show3d ? 'drehen und zoomen mit dem Finger' : 'tippe einen Punkt an'}
             </p>
           </div>
         </Card>
