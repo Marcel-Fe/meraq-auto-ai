@@ -23,8 +23,6 @@ export interface Reminder {
   overdue: boolean
 }
 
-const DAY = 86_400_000
-
 /**
  * Alle Termine, die sich aus den Daten des Nutzers wirklich datieren lassen.
  *
@@ -107,7 +105,7 @@ export function buildIcs(reminders: Reminder[], calendarName: string): string {
       `UID:${r.id}@meraq-auto-ai`,
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${dayStamp(start)}`,
-      `DTEND;VALUE=DATE:${dayStamp(new Date(start.getTime() + DAY))}`,
+      `DTEND;VALUE=DATE:${dayStamp(nextDay(start))}`,
       `SUMMARY:${escapeText(r.title)}`,
       `DESCRIPTION:${escapeText(r.detail)}`,
       'BEGIN:VALARM',
@@ -128,6 +126,19 @@ function dayStamp(d: Date) {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`
 }
 
+/**
+ * Der nächste Kalendertag.
+ *
+ * Bewusst über `setDate` statt über 24 Stunden: Am Tag der Zeitumstellung im
+ * Herbst hat der Tag 25 Stunden, dort landete das Ende noch im selben Tag –
+ * DTEND war gleich DTSTART und der Termin damit null Tage lang.
+ */
+function nextDay(d: Date) {
+  const next = new Date(d)
+  next.setDate(next.getDate() + 1)
+  return next
+}
+
 function utcStamp(d: Date) {
   return (
     `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}` +
@@ -139,8 +150,19 @@ function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
+/**
+ * Maskiert die Zeichen, die im Format eine Bedeutung haben.
+ *
+ * Alle drei Arten von Zeilenende müssen zu `\n` werden – ein rohes CR aus einer
+ * unter Windows getippten Notiz blieb sonst mitten im Wert stehen und ist dort
+ * ein Formatverstoß.
+ */
 function escapeText(value: string) {
-  return value.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n')
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r\n|\r|\n/g, '\\n')
 }
 
 /** Lange Zeilen umbrechen – das Format erlaubt höchstens 75 Oktette je Zeile */

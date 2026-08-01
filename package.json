@@ -15,6 +15,7 @@
     "test:workshops": "node scripts/test-workshops.mjs",
     "test:image": "node --experimental-strip-types scripts/test-vehicle-image.mjs",
     "test:calc": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-calc.mjs",
+    "test:ics": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-ics.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
