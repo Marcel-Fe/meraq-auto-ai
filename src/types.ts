@@ -323,6 +323,32 @@ export interface ManualZone {
   hotspots: ManualHotspot[]
 }
 
+/**
+ * Ein von der KI erklärtes Bauteil aus der freien Suche im Handbuch.
+ * Die fest hinterlegten Bauteile decken nur die häufigsten ab – gesucht wird
+ * aber alles, vom Radlager bis zum Ladedrucksensor.
+ */
+export interface PartExplanation {
+  name: string
+  /** Gibt es dieses Bauteil am Fahrzeug des Nutzers überhaupt? */
+  exists: boolean
+  fn: string
+  /** Wo es an dieser Fahrzeugart sitzt */
+  location?: string
+  symptoms: string[]
+  /** Ungefährliche Prüfschritte für den Nutzer selbst */
+  checks?: string[]
+  effort: 'selbst machbar' | 'mit Erfahrung' | 'Werkstatt'
+  interval?: string
+  /** Ersatzteilpreis im deutschen Handel – Spanne, keine feste Zahl */
+  partCostMinEur?: number
+  partCostMaxEur?: number
+  /** Arbeitszeit der Werkstatt in Stunden; den Stundensatz rechnet die App dazu */
+  laborHours?: number
+  safetyNote?: string
+  note?: string
+}
+
 export interface ManualHotspot {
   id: string
   label: string
@@ -335,6 +361,12 @@ export interface ManualHotspot {
    * Fehlt sie, taucht das Bauteil nur in der 2D-Ansicht auf.
    */
   pos3d?: [number, number, number]
+  /**
+   * Eigene Position am Motorrad-Modell. Nötig, weil sich die Pkw-Positionen
+   * nicht umrechnen lassen: Der Motor sitzt beim Motorrad in der Mitte, die
+   * Bremsscheibe trotzdem ganz vorn am Rad.
+   */
+  pos3dBike?: [number, number, number]
   fn: string
   problems: string[]
   interval?: string
