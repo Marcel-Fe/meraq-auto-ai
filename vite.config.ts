@@ -19,7 +19,12 @@ export default defineConfig({
         lang: 'de',
         start_url: '/meraq-auto-ai/',
         scope: '/meraq-auto-ai/',
-        display: 'standalone',
+        // Vollbild wie eine native App. Android blendet damit die Statusleiste
+        // wirklich aus; iOS lässt sie systembedingt stehen, legt sie aber über
+        // den App-Hintergrund (black-translucent in index.html). `standalone`
+        // bleibt als Rückfall für Browser ohne Vollbild-Modus.
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone'],
         orientation: 'portrait',
         background_color: '#05070D',
         theme_color: '#05070D',
