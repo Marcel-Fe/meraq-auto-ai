@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertCircle,
+  Box,
   CheckCircle2,
+  ChevronRight,
   Info,
   Plus,
   Search,
@@ -25,6 +27,7 @@ import {
 } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
 import { useActiveVehicle, useAppStore, useVehicleDiagnoses } from '../../store/useAppStore'
+import { findHotspotId } from '../../data/manual'
 import { DTC_DB, SEVERITY_LABEL, isValidDtc, lookupDtc, normalizeDtc, searchDtc } from '../../lib/dtc'
 import type { DtcInfo } from '../../lib/dtc'
 import { formatDate, formatRange, todayIso } from '../../lib/format'
@@ -336,6 +339,29 @@ export default function DiagnosisScreen() {
                 </ul>
               </div>
             )}
+
+            {/* Von der Ursache zur Stelle am Fahrzeug – ohne den Umweg über „Mehr" */}
+            {(() => {
+              const spotId = vehicle
+                ? findHotspotId(`${detail.title} ${detail.system} ${detail.causes.join(' ')}`, vehicle)
+                : undefined
+              if (!spotId) return null
+              return (
+                <Link
+                  to={`/manual?teil=${spotId}`}
+                  className="glass flex items-center gap-3 rounded-[15px] px-4 py-3 transition active:scale-[.99]"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-teal/15 text-brand-teal">
+                    <Box size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-medium">Wo sitzt das am Fahrzeug?</span>
+                    <span className="block text-[12px] text-ink-muted">Im Modell zeigen</span>
+                  </span>
+                  <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+                </Link>
+              )
+            })()}
 
             {detail.costMin > 0 && (
               <Card>

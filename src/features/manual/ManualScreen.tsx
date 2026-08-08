@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
   Box,
@@ -41,6 +41,7 @@ function hasWebgl() {
 export default function ManualScreen() {
   const vehicle = useActiveVehicle()
   const hourlyRate = useAppStore((s) => s.settings.hourlyRateEur)
+  const [params, setParams] = useSearchParams()
   const [zoneId, setZoneId] = useState<string | null>(null)
   const [spot, setSpot] = useState<ManualHotspot | null>(null)
   const [answer, setAnswer] = useState('')
@@ -70,6 +71,24 @@ export default function ManualScreen() {
       .filter((m) => m.hotspot.label.toLowerCase().includes(q) || m.hotspot.fn.toLowerCase().includes(q))
       .slice(0, 6)
   }, [zones, term])
+
+  // Einstieg aus Diagnose oder Teilesuche: /manual?teil=<id> öffnet die richtige
+  // Zone, wählt das Bauteil aus und richtet die Kamera darauf
+  const wantedId = params.get('teil')
+  useEffect(() => {
+    if (!wantedId) return
+    for (const z of zones) {
+      const found = z.hotspots.find((h) => h.id === wantedId)
+      if (found) {
+        setZoneId(z.id)
+        setSpot(found)
+        setAnswer('')
+        break
+      }
+    }
+    // Parameter entfernen, sonst öffnet sich das Sheet nach dem Schließen erneut
+    setParams({}, { replace: true })
+  }, [wantedId, zones, setParams])
 
   if (!vehicle || zones.length === 0) return null
 

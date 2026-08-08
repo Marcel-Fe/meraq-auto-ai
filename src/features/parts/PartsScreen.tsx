@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Info, Search, ShoppingCart, Sparkles } from 'lucide-react'
+import { Box, ChevronRight, Info, Search, ShoppingCart, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import {
   Badge,
@@ -15,6 +15,7 @@ import {
 } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
 import { VehicleImage, VehicleImageCredit } from '../../components/VehicleCard'
+import { findHotspotId } from '../../data/manual'
 import { PART_CATEGORIES, partsFor } from '../../data/parts'
 import { formatEurCents } from '../../lib/format'
 import { vehicleProfile } from '../../lib/vehicleProfile'
@@ -216,6 +217,27 @@ export default function PartsScreen() {
                 </div>
               </Card>
             )}
+
+            {/* Wer ein Teil kauft, will oft erst wissen, wo es überhaupt sitzt */}
+            {(() => {
+              const spotId = findHotspotId(`${selected.name} ${selected.category}`, vehicle)
+              if (!spotId) return null
+              return (
+                <Link
+                  to={`/manual?teil=${spotId}`}
+                  className="glass flex items-center gap-3 rounded-[15px] px-4 py-3 transition active:scale-[.99]"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-teal/15 text-brand-teal">
+                    <Box size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-medium">Wo sitzt das Teil?</span>
+                    <span className="block text-[12px] text-ink-muted">Im Modell zeigen</span>
+                  </span>
+                  <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+                </Link>
+              )
+            })()}
 
             {/* Teilenummern werden bewusst nicht geraten – sie gelten immer nur für eine
                 bestimmte Baureihe und Motorvariante. */}

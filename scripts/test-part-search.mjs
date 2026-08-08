@@ -11,7 +11,7 @@
  */
 import { chromium, devices } from 'playwright'
 import { mkdirSync } from 'node:fs'
-import { startPreview } from './preview-server.mjs'
+import { ensurePreview } from './preview-server.mjs'
 
 const OUT = 'screenshots/bauteilsuche'
 mkdirSync(OUT, { recursive: true })
@@ -43,7 +43,7 @@ const ANSWERS = {
   },
 }
 
-const preview = await startPreview(4173)
+const preview = await ensurePreview(process.argv[2])
 
 try {
   const browser = await chromium.launch()
@@ -121,8 +121,9 @@ try {
   if (!sheet.includes('Wandelt Bewegungsenergie')) {
     problems.push('[suche] Der Treffer öffnet das Bauteil nicht')
   }
-  // Das X im Sheet-Kopf, nicht die Hintergrundfläche – die liegt unter dem Sheet
-  await page.getByRole('button', { name: 'Schließen' }).last().click()
+  // "Fertig" im Sheet-Kopf. Die Fläche mit aria-label "Schließen" liegt hinter
+  // dem Sheet – ein Klick darauf trifft in Playwright das Sheet selbst.
+  await page.getByRole('button', { name: 'Fertig' }).click()
   await page.waitForTimeout(500)
 
   // --- Unbekanntes Bauteil: die KI erklärt es mit Kostenrahmen ---
@@ -162,9 +163,60 @@ try {
     }
   }
 
-  // Das X im Sheet-Kopf, nicht die Hintergrundfläche – die liegt unter dem Sheet
-  await page.getByRole('button', { name: 'Schließen' }).last().click()
+  // "Fertig" im Sheet-Kopf. Die Fläche mit aria-label "Schließen" liegt hinter
+  // dem Sheet – ein Klick darauf trifft in Playwright das Sheet selbst.
+  await page.getByRole('button', { name: 'Fertig' }).click()
   await page.waitForTimeout(500)
+
+  // --- Sprung ins Modell: /manual?teil=<id> öffnet Zone, Bauteil und Sheet ---
+  await goto('#/manual?teil=exhaust')
+  await page.waitForTimeout(900)
+  // Am Sheet selbst prüfen: der Text des Bauteils steht auch in der Liste darunter
+  const sheetText = async () => {
+    const sheet = page.locator('.anim-sheet')
+    return (await sheet.count()) ? sheet.first().innerText() : ''
+  }
+  const sprung = await sheetText()
+  if (!sprung.includes('Abgasanlage')) {
+    problems.push(`[sprung] /manual?teil=exhaust öffnet das Bauteil nicht (Sheet: ${sprung.slice(0, 40)})`)
+  }
+  if (!sprung.includes('Führt Abgase ab')) {
+    problems.push('[sprung] Das Bauteil-Sheet zeigt die Funktion nicht')
+  }
+  const zonenTitel = await page
+    .locator('div.overflow-x-auto > button.brand-gradient')
+    .first()
+    .innerText()
+  if (!/Fahrwerk/.test(zonenTitel)) {
+    problems.push(`[sprung] Es wurde nicht in die passende Zone gewechselt (aktiv: ${zonenTitel})`)
+  }
+  await page.screenshot({ path: `${OUT}/sprung-ins-modell.png` })
+  await page.getByRole('button', { name: 'Fertig' }).click()
+  await page.waitForTimeout(500)
+
+  // Der Parameter muss verbraucht sein, sonst öffnet sich das Sheet endlos neu
+  if ((await page.evaluate(() => window.location.hash)).includes('teil=')) {
+    problems.push('[sprung] Der Parameter bleibt in der Adresse stehen')
+  }
+  if (await page.locator('.anim-sheet').count()) {
+    problems.push('[sprung] Das Sheet öffnet sich nach dem Schließen erneut')
+  }
+
+  // --- Verweis aus der Diagnose zeigt auf das richtige Bauteil ---
+  await goto('#/diagnosis')
+  await page.getByRole('button', { name: 'Fehlercode eintragen' }).first().click()
+  await page.waitForTimeout(500)
+  await page.getByPlaceholder('Code oder Stichwort, z. B. P0300').fill('P0420')
+  await page.waitForTimeout(500)
+  await page.getByText('P0420', { exact: false }).last().click()
+  await page.waitForTimeout(800)
+  await page.getByText('P0420', { exact: false }).last().click()
+  await page.waitForTimeout(800)
+  const codeDetail = await text()
+  if (!codeDetail.includes('Wo sitzt das am Fahrzeug?')) {
+    problems.push('[diagnose] Der Verweis ins Modell fehlt am Fehlercode')
+  }
+  await page.screenshot({ path: `${OUT}/diagnose-verweis.png` })
 
   // --- Fahrzeugunabhängigkeit: E-Auto anlegen und nach dem Ölfilter fragen ---
   await goto('#/vehicle/new')

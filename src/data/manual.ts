@@ -318,6 +318,67 @@ export function manualZonesFor(vehicle: Vehicle): ManualZone[] {
     .filter((zone) => zone.hotspots.length > 0)
 }
 
+/**
+ * Stichwörter je Bauteil – die Brücke von einem Fehlercode oder einem Ersatzteil
+ * zur Stelle im Modell.
+ *
+ * Bewusst hier und nicht im Screen: Ob ein Fehlercode zu den Bremsen gehört,
+ * ist Fachwissen und gehört zu den Daten. Die Screens fragen nur nach.
+ */
+const HOTSPOT_KEYWORDS: Record<string, string[]> = {
+  // "bremsbel" statt "bremsbelag": Der Plural heißt Bremsbeläge – mit Umlaut
+  'brake-disc': ['bremsscheibe', 'bremsbel', 'bremsklotz', 'bremssattel', 'bremsen'],
+  'brake-fluid': ['bremsflüssigkeit'],
+  'wheel-sensor': ['abs', 'raddrehzahl', 'esp', 'asr'],
+  tire: ['reifen', 'profiltiefe', 'luftdruck', 'reifendruck'],
+  shock: ['stoßdämpfer', 'federbein', 'fahrwerksfeder', 'domlager'],
+  exhaust: ['abgas', 'auspuff', 'katalysator', 'partikelfilter', 'lambda', 'endtopf'],
+  'oil-cap': ['motoröl', 'ölstand', 'ölwechsel', 'öldruck'],
+  'oil-filter-housing': ['ölfilter'],
+  'air-filter-box': ['luftfilter', 'luftmassenmesser', 'ansaug', 'falschluft', 'gemisch'],
+  battery: ['starterbatterie', 'autobatterie', 'bordnetzspannung', 'lichtmaschine', 'anlasser'],
+  'coolant-tank': ['kühlmittel', 'kühlwasser', 'thermostat', 'kühler', 'wasserpumpe', 'überhitz'],
+  belt: ['keilrippenriemen', 'zahnriemen', 'spannrolle'],
+  turbo: ['turbolader', 'ladedruck', 'ladeluft', 'agr', 'abgasrückführung'],
+  'cabin-filter': ['innenraumfilter', 'pollenfilter'],
+  'ac-vent': ['klimaanlage', 'klimakompressor', 'kältemittel'],
+  cluster: ['kombiinstrument', 'tacho', 'warnleuchte'],
+  'obd-port': ['diagnosebuchse', 'obd'],
+  'fuse-box': ['sicherung', 'sicherungskasten'],
+  seatbelt: ['airbag', 'gurtstraffer', 'gurt', 'rückhaltesystem'],
+  chain: ['antriebskette', 'kettenkit', 'kettenrad'],
+  'hv-battery': ['hochvoltbatterie', 'hochvolt', 'traktionsbatterie'],
+  'charging-port': ['ladeanschluss', 'ladedose', 'ladeklappe'],
+  inverter: ['leistungselektronik', 'inverter', 'wechselrichter'],
+}
+
+/**
+ * Sucht zu einem beliebigen Text (Fehlercode-Titel, Teilename, Suchbegriff) das
+ * passende Bauteil im Modell – aber nur eines, das es an diesem Fahrzeug gibt.
+ * Ein E-Auto darf nicht zum Ölfilter springen.
+ */
+export function findHotspotId(text: string, vehicle: Vehicle): string | undefined {
+  const haystack = text.toLowerCase()
+  const available = new Set(manualZonesFor(vehicle).flatMap((z) => z.hotspots.map((h) => h.id)))
+
+  let best: { id: string; length: number } | undefined
+  for (const [id, words] of Object.entries(HOTSPOT_KEYWORDS)) {
+    if (!available.has(id)) continue
+    for (const word of words) {
+      // Das längste Stichwort gewinnt: "bremsflüssigkeit" ist genauer als "bremsen"
+      if (haystack.includes(word) && (!best || word.length > best.length)) {
+        best = { id, length: word.length }
+      }
+    }
+  }
+  return best?.id
+}
+
+/** In welcher Zone liegt ein Bauteil? Für den Sprung aus Diagnose und Teilesuche. */
+export function zoneOfHotspot(hotspotId: string, vehicle: Vehicle): string | undefined {
+  return manualZonesFor(vehicle).find((z) => z.hotspots.some((h) => h.id === hotspotId))?.id
+}
+
 function zoneLabel(zoneId: string, vehicle: Vehicle) {
   const traits = vehicleTraits(vehicle)
   if (zoneId === 'engine') {

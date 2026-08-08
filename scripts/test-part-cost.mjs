@@ -1,13 +1,15 @@
 /**
- * Prüft den Kostenrahmen der freien Bauteil-Suche.
+ * Prüft die reine Logik rund um die Bauteil-Suche: den Kostenrahmen und die
+ * Zuordnung von Fehlercodes und Ersatzteilen zur Stelle im Modell.
  *
- * Die Zahl steht neben einer KI-Antwort – der Nutzer kann nicht sehen, welcher
- * Teil geschätzt und welcher gerechnet ist. Deshalb muss die Rechnung stimmen:
- * Ersatzteil-Spanne von der KI, Arbeitszeit × Stundensatz des Nutzers.
+ * Beim Kostenrahmen steht die Zahl neben einer KI-Antwort – der Nutzer kann
+ * nicht sehen, welcher Teil geschätzt und welcher gerechnet ist. Bei der
+ * Zuordnung wäre ein Sprung zum falschen Bauteil schlimmer als gar keiner.
  *
  * Aufruf: npm run test:part
  */
 import { partCostEstimate } from '../src/lib/partCost.ts'
+import { findHotspotId, zoneOfHotspot } from '../src/data/manual.ts'
 
 const problems = []
 const check = (name, ok, detail = '') => {
@@ -65,9 +67,64 @@ console.log('Randfälle')
   check('ohne Stundensatz keine Arbeitskosten', ohneSatz.laborCost === undefined)
 }
 
+const vehicle = (patch = {}) => ({
+  id: 'v1',
+  kind: 'car',
+  make: 'BMW',
+  model: '320d',
+  year: 2018,
+  mileage: 120000,
+  mileageUpdatedAt: '2026-08-01T00:00:00.000Z',
+  fuel: 'Diesel',
+  transmission: 'Automatik',
+  powerKw: 140,
+  condition: 'gut',
+  createdAt: '2026-08-01T00:00:00.000Z',
+  ...patch,
+})
+
+console.log('Zuordnung Fehlercode und Teil → Bauteil')
+{
+  const diesel = vehicle()
+  const faelle = [
+    ['Katalysator-Wirkungsgrad zu gering', 'exhaust'],
+    ['ABS-Sensor vorne links – Signal fehlerhaft', 'wheel-sensor'],
+    ['Bremsflüssigkeit', 'brake-fluid'],
+    ['Bremsbeläge vorne', 'brake-disc'],
+    ['Luftmassenmesser', 'air-filter-box'],
+    ['Ölfilter', 'oil-filter-housing'],
+    ['Innenraumfilter', 'cabin-filter'],
+    ['Ladedruck zu niedrig', 'turbo'],
+  ]
+  for (const [text, erwartet] of faelle) {
+    const treffer = findHotspotId(text, diesel)
+    check(`"${text}" → ${erwartet}`, treffer === erwartet, `gefunden: ${treffer ?? 'nichts'}`)
+  }
+
+  check(
+    'Das genauere Stichwort gewinnt (Bremsflüssigkeit vor Bremsen)',
+    findHotspotId('Bremsflüssigkeit wechseln – Bremsen prüfen', diesel) === 'brake-fluid',
+  )
+  check('Ohne Bezug kein Sprung', findHotspotId('Steuergerät Komfortsystem', diesel) === undefined)
+  check('Zone wird mitgeliefert', zoneOfHotspot('exhaust', diesel) === 'chassis')
+}
+
+console.log('Zuordnung bleibt fahrzeuggerecht')
+{
+  const eAuto = vehicle({ fuel: 'Elektro', make: 'Tesla', model: 'Model 3' })
+  const bike = vehicle({ kind: 'motorcycle', make: 'Honda', model: 'CB 650 R', fuel: 'Benzin' })
+
+  check('E-Auto springt nicht zum Ölfilter', findHotspotId('Ölfilter', eAuto) === undefined)
+  check('E-Auto springt nicht zum Turbolader', findHotspotId('Ladedruck', eAuto) === undefined)
+  check('E-Auto findet die Hochvoltbatterie', findHotspotId('Hochvoltbatterie', eAuto) === 'hv-battery')
+  check('E-Auto findet die Bremsscheibe weiterhin', findHotspotId('Bremsbeläge', eAuto) === 'brake-disc')
+  check('Motorrad springt nicht zum Innenraumfilter', findHotspotId('Innenraumfilter', bike) === undefined)
+  check('Motorrad findet die Antriebskette', findHotspotId('Kettenkit', bike) === 'chain')
+}
+
 if (problems.length) {
   console.log('\nPROBLEME:')
   for (const p of problems) console.log(' -', p)
   process.exit(1)
 }
-console.log('\nOK – der Kostenrahmen rechnet nachvollziehbar.')
+console.log('\nOK – Kostenrahmen und Bauteil-Zuordnung stimmen.')

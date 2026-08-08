@@ -480,6 +480,15 @@ export default function CarScene3D({ zone, kind, hotspots, selectedId, onSelect 
     const project = new THREE.Vector3()
     const [sx, sy, sz] = p.hotspotScale
 
+    /** Wo ein Bauteil an diesem Modell sitzt */
+    const positionOf = (spot: ManualHotspot): [number, number, number] | null => {
+      // Am Motorrad gilt die eigene Position, wo es eine gibt – umrechnen
+      // lässt sich das nicht (siehe `pos3dBike` in types.ts)
+      if (build === 'bike' && spot.pos3dBike) return spot.pos3dBike
+      if (!spot.pos3d) return null
+      return [spot.pos3d[0] * sx, spot.pos3d[1] * sy, spot.pos3d[2] * sz]
+    }
+
     const placeMarkers = () => {
       const container = markerRef.current
       if (!container) return
@@ -487,12 +496,9 @@ export default function CarScene3D({ zone, kind, hotspots, selectedId, onSelect 
 
       for (const spot of stateRef.current.hotspots) {
         const el = container.querySelector<HTMLElement>(`[data-spot="${spot.id}"]`)
-        if (!el || !spot.pos3d) continue
-        // Am Motorrad gilt die eigene Position, wo es eine gibt – umrechnen
-        // lässt sich das nicht (siehe `pos3dBike` in types.ts)
-        const at = build === 'bike' && spot.pos3dBike ? spot.pos3dBike : null
-        if (at) project.set(...at).project(camera)
-        else project.set(spot.pos3d[0] * sx, spot.pos3d[1] * sy, spot.pos3d[2] * sz).project(camera)
+        const at = el ? positionOf(spot) : null
+        if (!el || !at) continue
+        project.set(...at).project(camera)
         const behind = project.z > 1
         el.style.transform = `translate(-50%, -50%) translate(${((project.x + 1) / 2) * rect.width}px, ${((1 - project.y) / 2) * rect.height}px)`
         el.style.opacity = behind ? '0' : '1'
@@ -504,9 +510,32 @@ export default function CarScene3D({ zone, kind, hotspots, selectedId, onSelect 
       }
     }
 
+    // --- Kamera auf das ausgewählte Bauteil ziehen ---
+    // Wer aus der Diagnose kommt („wo sitzt der ABS-Sensor?"), soll das Teil
+    // nicht am Bildrand suchen müssen. Sanft, damit die Ansicht nicht springt.
+    const focus = new THREE.Vector3()
+    let focusing = false
+    let focusedId: string | undefined
+
     let frame = 0
     const animate = () => {
       frame = requestAnimationFrame(animate)
+
+      const selected = stateRef.current.selectedId
+      if (selected !== focusedId) {
+        focusedId = selected
+        const spot = stateRef.current.hotspots.find((h) => h.id === selected)
+        const at = spot ? positionOf(spot) : null
+        if (at) {
+          focus.set(...at)
+          focusing = true
+        } else focusing = false
+      }
+      if (focusing) {
+        controls.target.lerp(focus, 0.07)
+        if (controls.target.distanceTo(focus) < 0.02) focusing = false
+      }
+
       controls.update()
       renderer.render(scene, camera)
       placeMarkers()
