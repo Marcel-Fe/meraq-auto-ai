@@ -90,6 +90,9 @@ await page.waitForTimeout(400)
 
 // --- Vor der Suche: Beispiele müssen als solche gekennzeichnet sein ---
 await goto('#/workshops')
+// Der Screen wird erst bei Bedarf geladen – auf ihn warten statt auf die Uhr,
+// sonst prüft der Test eine noch leere Seite
+await page.getByRole('button', { name: 'Werkstätten in der Nähe suchen' }).waitFor({ timeout: 15000 })
 const before = await text()
 if (!before.includes('Beispielbetriebe')) problems.push('[start] Beispieldaten sind nicht gekennzeichnet')
 if (!/erfunden/.test(before)) problems.push('[start] Es steht nicht dabei, dass die Beispiele erfunden sind')

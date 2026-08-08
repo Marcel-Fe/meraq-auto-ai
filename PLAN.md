@@ -37,11 +37,19 @@ Fahrzeugunabhängigkeit ✅
 Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
-- Smoke-Test über alle 23 Screens im iPhone-Format (`npm run test:smoke`)
-- Erststart-Bundle 105 kB gzip; KI-SDK (42 kB), Charts (105 kB) und die 3D-Szene (148 kB)
-  werden erst bei Bedarf geladen. **Offen:** Der Commit zur Werkstattsuche hat den Erststart
-  von 86 auf 108 kB gebracht — Ursache noch nicht belegt, siehe Session-Prompt zum
-  3D-Bauteil-Explorer.
+- Smoke-Test über alle 23 Screens im iPhone-Format (`npm run test:smoke`), die ganze Reihe
+  in einem Lauf über `npm run verify`
+- **Erststart 107 kB gzip.** Das ist die ehrliche Zahl: die `index`-Datei plus alles, was der
+  Browser über `modulepreload` mitlädt (`npm run analyze` rechnet es zusammen). Die früher
+  genannten 86 kB waren nur die `index`-Datei — daneben lag ein zweiter, ebenfalls
+  vorgeladener Chunk mit React Router (23 kB gzip). Als der beim Commit zur Werkstattsuche in
+  die `index`-Datei wanderte, sah das nach +22 kB aus; gemessen über alle Startdateien lag der
+  Erststart vorher bei 109 kB und liegt heute bei 107 kB. Das frühere Budget von 98 kB hat es
+  in dieser Rechnung nie gegeben.
+- Zwei Drittel des Erststarts sind React und React Router (rund 70 kB gzip) — daran lässt sich
+  ohne Framework-Wechsel nichts drehen. Eigener Code sind knapp 30 kB.
+- Erst bei Bedarf geladen: 3D-Szene (145 kB), Charts (101 kB), KI-SDK (41 kB) und jeder
+  Screen einzeln (5–7 kB).
 
 ## Phase 2 — Tiefe
 
@@ -125,6 +133,27 @@ Erledigt ✅
     Schadstoffklasse besteuert; dort nennt die App jetzt einen Hinweis statt einer Zahl.
     Fehlt das Erstzulassungsdatum, dient das Baujahr als Näherung — sichtbar in der
     Erklärung. Belegt mit `npm run test:calc` (22 Fälle, von Hand nachgerechnet).
+
+13. **3D-Bauteil-Explorer** ✅ — `/manual` zeigt das Fahrzeug räumlich: Karosserie aus einem
+    Seitenprofil mit gerundeten Übergängen und ausgeschnittenen Radkästen, nach oben und zu den
+    Enden verjüngt, mit eigener Glasfläche und Rädern samt Felge. Ein Motorrad hat keine
+    Karosserie und besteht deshalb aus Baugruppen (Motor, Gabel, Lenker, Schwinge, Auspuff,
+    Kette); seine Bauteil-Marker haben eigene Positionen (`pos3dBike`), weil sich die am Pkw
+    gemessenen nicht umrechnen lassen. Ohne WebGL bleibt der 2D-Weg vollständig bedienbar.
+    Three.js liegt allein im Lazy-Chunk (149 kB gzip). Geprüft mit `npm run test:3d`, das
+    Pkw, Transporter und Motorrad in jeder Zone aufnimmt — Formfehler bestehen jeden Zahlentest.
+
+14. **Bauteil-Suche mit KI-Erklärung** ✅ — die App kennt gut zwei Dutzend Bauteile fest, ein
+    Fahrzeug hat ein paar tausend. Das Suchfeld im Handbuch findet die hinterlegten über alle
+    Zonen; alles andere erklärt die KI mit dem Fahrzeugkontext: Funktion, Lage, Symptome,
+    Selbstprüfung, Aufwand und Kostenrahmen. Die Kosten sind **gerechnet**, nicht geraten —
+    die KI liefert nur die Ersatzteilspanne und die Arbeitszeit, den Stundensatz nimmt die App
+    aus den Einstellungen und legt die Rechnung offen. Gibt es das Bauteil am Fahrzeug nicht
+    (Ölfilter im E-Auto), sagt die App das, statt hilfreich zu wirken. Aus Diagnose und
+    Teilesuche führt `/manual?teil=<id>` direkt zur Stelle im Modell; die Zuordnung von
+    Fehlercode und Ersatzteil zum Bauteil steht in den Daten, nicht im Screen.
+    Belegt mit `npm run test:part` (Rechnung und Zuordnung) und `npm run test:partsearch`
+    (der ganze Weg mit abgefangener KI-Antwort).
 
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat

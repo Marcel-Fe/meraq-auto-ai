@@ -8,6 +8,15 @@
  */
 import { spawn } from 'node:child_process'
 
+/**
+ * Nimmt eine übergebene Adresse, wenn es sie gibt (dann läuft der Server schon,
+ * etwa in `verify.mjs`), sonst startet sie einen eigenen.
+ */
+export async function ensurePreview(baseFromArgv, port = 4173) {
+  if (baseFromArgv) return { base: baseFromArgv, stop: () => {} }
+  return startPreview(port)
+}
+
 export async function startPreview(port = 4173) {
   const base = `http://localhost:${port}/meraq-auto-ai/`
   const server = spawn(

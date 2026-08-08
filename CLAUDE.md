@@ -101,13 +101,24 @@ Route in [src/app/App.tsx](src/app/App.tsx) ergänzen, in `scripts/smoke-test.mj
 
 ```bash
 npm run build          # tsc + vite, muss ohne Fehler durchlaufen
-npm run preview        # Server auf http://localhost:4173/meraq-auto-ai/
-npm run test:smoke     # 23 Screens im iPhone-Format, Screenshots in screenshots/
-npm run test:vehicles  # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
-npm run test:ai        # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
-npm run test:workshops # Werkstattsuche mit abgefangenen Karten-Antworten
-npm run test:image     # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
-npm run test:calc      # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
+npm run verify         # alle Prüfungen unten in einem Lauf, Server inklusive
+```
+
+`verify` startet den Vorschau-Server selbst und reicht ihn weiter — einzeln aufgerufen
+brauchen die UI-Tests einen laufenden `npm run preview`:
+
+```bash
+npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
+npm run test:ics        # Kalender-Datei gegen RFC 5545
+npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
+npm run test:image      # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
+npm run test:smoke      # 23 Screens im iPhone-Format, Screenshots in screenshots/
+npm run test:vehicles   # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
+npm run test:ai         # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
+npm run test:workshops  # Werkstattsuche mit abgefangenen Karten-Antworten
+npm run test:partsearch # Bauteil-Suche samt KI-Erklärung und Sprung ins Modell
+npm run test:3d         # Screenshots der 3D-Ansicht – Formfehler bestehen jeden Zahlentest
+npm run analyze         # was im Erststart-Bundle steckt, Modul für Modul
 ```
 
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz

@@ -109,8 +109,16 @@ Diese Unterscheidung ist ein Produktversprechen und muss in jeder Weiterentwickl
 **Bewusst anders gelöst als im Masterprompt**
 - **OBD-Diagnose** — ein Browser kann keinen Bluetooth-OBD-Dongle auslesen.
   Stattdessen: Fehlercode eintragen, App erklärt ihn (Datenbank + KI) und schätzt die Kosten.
-- **3D-Handbuch** — es gibt keine frei lizenzierten 3D-Fahrzeugmodelle.
-  Stattdessen: schematischer Bauteil-Explorer mit antippbaren Zonen und KI-Vertiefung.
+- **3D-Handbuch** — es gibt keine frei lizenzierten 3D-Daten echter Baureihen, Hersteller-CAD
+  ist geschützt. Stattdessen baut die App das Fahrzeug selbst aus einem Seitenprofil auf
+  ([CarScene3D.tsx](src/features/manual/CarScene3D.tsx)): drehbar, mit verorteten Bauteilen,
+  aber bewusst nur die **Bauart** (Pkw, Transporter, Motorrad) — das steht auch im UI. Ohne
+  WebGL bleibt die schematische 2D-Ansicht der vollwertige Weg.
+- **Bauteile jenseits der Liste** — fest hinterlegt sind gut zwei Dutzend Bauteile, gesucht
+  wird nach allem. Was die App nicht kennt, erklärt die KI mit dem Fahrzeugkontext
+  ([partExplain.ts](src/lib/partExplain.ts)); den Kostenrahmen rechnet die App daraus selbst
+  ([partCost.ts](src/lib/partCost.ts)): Ersatzteilspanne der KI + Arbeitszeit × Stundensatz
+  des Nutzers, die Rechnung steht offen daneben.
 - **Werkstattsuche** — echte Betriebe aus OpenStreetMap über Overpass, auf Knopfdruck im
   gewählten Umkreis. Google Places wäre genauer, kostet aber Geld und bräuchte einen Server,
   der den Schlüssel versteckt. Der öffentliche Overpass-Dienst ist ein Gemeinschaftsangebot

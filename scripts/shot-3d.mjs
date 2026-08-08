@@ -10,7 +10,7 @@
  */
 import { chromium, devices } from 'playwright'
 import { mkdirSync } from 'node:fs'
-import { startPreview } from './preview-server.mjs'
+import { ensurePreview } from './preview-server.mjs'
 
 const OUT = 'screenshots/3d'
 mkdirSync(OUT, { recursive: true })
@@ -46,7 +46,7 @@ const CASES = [
 ]
 
 const problems = []
-const preview = await startPreview(4173)
+const preview = await ensurePreview(process.argv[2])
 
 try {
   const browser = await chromium.launch()
