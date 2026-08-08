@@ -19,6 +19,22 @@ export async function ensurePreview(baseFromArgv, port = 4173) {
 
 export async function startPreview(port = 4173) {
   const base = `http://localhost:${port}/meraq-auto-ai/`
+
+  // Läuft dort schon jemand, würde der eigene Server den Port nicht bekommen –
+  // und der Test liefe still gegen einen fremden, womöglich veralteten Stand.
+  // Genau so sind einmal alle fünf Oberflächen-Tests auf einen Schlag
+  // fehlgeschlagen, ohne dass an der App etwas falsch war.
+  try {
+    const laufend = await fetch(base)
+    if (laufend.ok) {
+      throw new Error(
+        `Auf Port ${port} antwortet bereits ein Server. Beende ihn zuerst – sonst prüft der Test einen fremden Stand.`,
+      )
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('antwortet bereits')) throw err
+    // Kein Server da: genau so soll es sein
+  }
   const server = spawn(
     process.execPath,
     ['node_modules/vite/bin/vite.js', 'preview', '--port', String(port)],
