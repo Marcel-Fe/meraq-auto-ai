@@ -122,6 +122,11 @@ npm run test:3d         # Screenshots der 3D-Ansicht – Formfehler bestehen jed
 npm run analyze         # was im Erststart-Bundle steckt, Modul für Modul
 ```
 
+Nach Änderungen an den Bauteilen oder ihren Suchbegriffen zusätzlich
+`npm run check:partimages` — das fragt Wikimedia Commons wirklich und zeigt, welches
+Foto jedes Bauteil bekäme. Es gehört bewusst nicht in `verify`: Der Dienst ist ein
+Gemeinschaftsangebot und weist zu schnelle Folgen ab.
+
 Der Smoke-Test prüft Konsolenfehler, horizontales Scrollen, leere Seiten, die Persistenz
 des Kilometerstands und das Verhalten ohne API-Schlüssel.
 

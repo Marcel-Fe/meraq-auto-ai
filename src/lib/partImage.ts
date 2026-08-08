@@ -77,12 +77,24 @@ export async function findPartImage(
   }
 
   const found = await search(hotspot, signal)
+  // `undefined` heißt: Der Abruf ist gescheitert, nicht "es gibt kein Bild".
+  // Commons weist bei zu vielen Anfragen ab – das darf sich die App nicht als
+  // dauerhaftes Nein merken, sonst bleibt das Bauteil für immer ohne Foto.
+  if (found === undefined) return null
+
   memory.set(key, found)
   await putFile(key, JSON.stringify(found ?? {})).catch(() => undefined)
   return found
 }
 
-async function search(hotspot: ManualHotspot, signal?: AbortSignal): Promise<PartWebImage | null> {
+/**
+ * @returns Das Foto, `null` wenn es nichts Passendes gibt, `undefined` wenn der
+ * Abruf technisch gescheitert ist.
+ */
+async function search(
+  hotspot: ManualHotspot,
+  signal?: AbortSignal,
+): Promise<PartWebImage | null | undefined> {
   const term = searchTermFor(hotspot)
   const url =
     `${COMMONS}?action=query&format=json&origin=*&generator=search` +
@@ -92,18 +104,20 @@ async function search(hotspot: ManualHotspot, signal?: AbortSignal): Promise<Par
   let pages: CommonsPage[]
   try {
     const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
-    if (!res.ok) return null
+    if (!res.ok) return undefined
     const data = (await res.json()) as { query?: { pages?: Record<string, CommonsPage> } }
     pages = Object.values(data.query?.pages ?? {}).sort((a, b) => (a.index ?? 99) - (b.index ?? 99))
   } catch {
-    return null
+    // Kein Netz, abgewiesen oder keine JSON-Antwort – beim nächsten Mal erneut
+    return undefined
   }
 
-  const candidates: CommonsCandidate[] = pages.map((p) => ({
+  const candidates: CommonsCandidate[] = pages.map((p, rank) => ({
     title: p.title ?? '',
     license: plainText(p.imageinfo?.[0]?.extmetadata?.LicenseShortName?.value),
     width: p.imageinfo?.[0]?.thumbwidth,
     height: p.imageinfo?.[0]?.thumbheight,
+    rank,
   }))
 
   const chosen = pickPartImage(candidates, term)
@@ -116,7 +130,8 @@ async function search(hotspot: ManualHotspot, signal?: AbortSignal): Promise<Par
 
   try {
     const res = await fetch(src, { signal })
-    if (!res.ok) return null
+    // Auch hier: ein gescheiterter Download ist kein "es gibt kein Bild"
+    if (!res.ok) return undefined
     const blob = await res.blob()
     if (!blob.type.startsWith('image/')) return null
     const dataUrl = await shrink(blob)
@@ -128,7 +143,7 @@ async function search(hotspot: ManualHotspot, signal?: AbortSignal): Promise<Par
       license: chosen.license ?? '',
     }
   } catch {
-    return null
+    return undefined
   }
 }
 

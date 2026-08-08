@@ -19,7 +19,18 @@ export interface CommonsCandidate {
   /** Breite und Höhe, soweit bekannt – Panoramen und Streifen taugen nicht */
   width?: number
   height?: number
+  /** Platz in der Trefferliste, 0 = erster. Commons sortiert nach Relevanz. */
+  rank?: number
 }
+
+/**
+ * Wörter, die den Fahrzeugbezug herstellen.
+ *
+ * Ohne sie landete beim „Kombiinstrument" das Cockpit einer Kawasaki Ki-61 –
+ * eines Jagdflugzeugs von 1943. Der Dateiname enthielt „instrument", mehr
+ * brauchte es nicht.
+ */
+const AUTOMOTIVE = /(car|auto|vehicle|motor|lorry|truck|kfz|pkw)/i
 
 /**
  * Freie Lizenzen, die eine Anzeige mit Namensnennung erlauben.
@@ -58,12 +69,21 @@ export function scoreCandidate(candidate: CommonsCandidate, query: string): numb
   if (!FREE_LICENSE.test(license) || NON_COMMERCIAL.test(license)) return 0
 
   const words = tokens(query)
-  const hits = words.filter((w) => file.includes(w)).length
+  // „car" allein ist kein Treffer: „FRA T19 car interior.jpg" ist eine
+  // Straßenbahn. Das Bauteil muss im Dateinamen stehen, nicht nur das Fahrzeug.
+  const specific = words.filter((w) => !AUTOMOTIVE.test(w))
+  const hits = (specific.length ? specific : words).filter((w) => file.includes(w)).length
   if (!hits) return 0
 
   let score = hits * 10
   // Ein vollständiger Treffer des Begriffs ist mehr wert als zwei Einzelwörter
   if (file.includes(words.join(''))) score += 5
+
+  // Fahrzeugbezug im Dateinamen – sonst ist es womöglich ein Flugzeug
+  if (AUTOMOTIVE.test(file)) score += 8
+
+  // Commons sortiert nach Relevanz; die ersten Treffer sind meist die besseren
+  if (typeof candidate.rank === 'number') score += Math.max(0, 6 - candidate.rank)
 
   // Quadratische Bilder zeigen das Teil, Streifen zeigen meist eine Werkbank
   if (candidate.width && candidate.height) {

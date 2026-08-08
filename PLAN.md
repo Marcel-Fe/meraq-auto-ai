@@ -163,7 +163,9 @@ Erledigt ✅
     ohne freie Lizenz weg und gibt im Zweifel **nichts** zurück: Ein falsches Bauteilfoto
     wäre schlimmer als keines, der Nutzer sucht danach unter seiner Motorhaube. Treffer und
     Misserfolge landen verkleinert in IndexedDB — jedes Öffnen des Sheets liefe sonst ins
-    Netz. Belegt mit `npm run test:partimage` (Auswahl und Lizenzen) und im UI-Test.
+    Netz. Belegt mit `npm run test:partimage` (Auswahl und Lizenzen) und im UI-Test;
+    `npm run check:partimages` fragt Commons wirklich und zeigt, dass jedes der
+    19 Bauteile ein passendes Foto findet.
 
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat

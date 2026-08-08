@@ -79,8 +79,50 @@ console.log('Was gewinnt')
   check('Ein Teiltreffer ist besser als nichts', nurTeiltreffer?.title === 'File:Car brake.jpg')
 }
 
+console.log('Fahrzeugbezug und Trefferreihenfolge')
+{
+  const q = 'instrument cluster car'
+  // Der echte Fall: Commons liefert zum "Kombiinstrument" ein Flugzeug-Cockpit
+  const gewaehlt = pickPartImage(
+    [
+      file('File:Instrument panel of Kawasaki Ki-61 fighter.jpg', { rank: 0 }),
+      file('File:Instrument cluster of a car dashboard.jpg', { rank: 3 }),
+    ],
+    q,
+  )
+  check(
+    'Das Fahrzeugbild schlägt das Flugzeug, auch wenn es später kommt',
+    gewaehlt?.title === 'File:Instrument cluster of a car dashboard.jpg',
+    gewaehlt?.title ?? 'keiner',
+  )
+
+  const gleichwertig = pickPartImage(
+    [
+      file('File:Car battery in a vehicle.jpg', { rank: 0 }),
+      file('File:Car battery in a vehicle 2.jpg', { rank: 5 }),
+    ],
+    'car battery',
+  )
+  check(
+    'Bei gleicher Eignung gewinnt der vordere Treffer',
+    gleichwertig?.title === 'File:Car battery in a vehicle.jpg',
+    gleichwertig?.title ?? 'keiner',
+  )
+}
+
 console.log('Lieber nichts als das Falsche')
 {
+  // Der echte Fall: „FRA T19 car interior.jpg" ist eine Straßenbahn und traf
+  // nur auf das Wort „car" – für einen Raddrehzahlsensor wertlos
+  check(
+    'Nur das Fahrzeugwort zu treffen genügt nicht',
+    scoreCandidate(file('File:FRA T19 car interior.jpg'), 'wheel speed sensor car') === 0,
+  )
+  check(
+    'Das Bauteil im Namen zählt weiterhin',
+    scoreCandidate(file('File:Wheel speed sensor of a car.jpg'), 'wheel speed sensor car') > 0,
+  )
+
   const nichts = pickPartImage(
     [file('File:Engine bay.jpg'), file('File:Workshop tools.png')],
     'ABS wheel speed sensor',

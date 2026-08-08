@@ -222,7 +222,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'wheel-sensor',
         label: 'ABS-Raddrehzahlsensor',
-        imageQuery: 'ABS wheel speed sensor',
+        imageQuery: 'ABS sensor',
         x: 34,
         y: 66,
         pos3d: [1.35, 0.30, -0.62] as [number, number, number],
