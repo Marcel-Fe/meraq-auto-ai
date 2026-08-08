@@ -349,9 +349,28 @@ export interface PartExplanation {
   note?: string
 }
 
+/**
+ * Frei lizenziertes Foto eines Bauteils aus Wikimedia Commons.
+ * Urheber und Lizenz gehören zur Nutzungsbedingung und werden im UI angezeigt.
+ */
+export interface PartWebImage {
+  /** Verkleinertes Bild, liegt in IndexedDB – danach ist kein Netz mehr nötig */
+  dataUrl: string
+  title: string
+  /** Beschreibungsseite der Datei (Nachweis der Lizenz) */
+  pageUrl: string
+  author: string
+  license: string
+}
+
 export interface ManualHotspot {
   id: string
   label: string
+  /**
+   * Suchbegriff für das Bauteilfoto. Der Anzeigename trifft auf Commons oft
+   * daneben: „Kühlmittel-Ausgleichsbehälter" findet nichts.
+   */
+  imageQuery?: string
   /** Position in Prozent der schematischen 2D-Szene */
   x: number
   y: number

@@ -112,6 +112,7 @@ npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzw
 npm run test:ics        # Kalender-Datei gegen RFC 5545
 npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
 npm run test:image      # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
+npm run test:partimage  # Auswahl des Bauteilfotos samt Lizenzprüfung, reine Logik
 npm run test:smoke      # 23 Screens im iPhone-Format, Screenshots in screenshots/
 npm run test:vehicles   # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 npm run test:ai         # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben

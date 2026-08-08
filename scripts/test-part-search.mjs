@@ -43,6 +43,14 @@ const ANSWERS = {
   },
 }
 
+/** 1×1-PNG – geprüft wird die Anzeige samt Lizenz, nicht der Bildinhalt */
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
+
+let commonsCalls = 0
+
 const preview = await ensurePreview(process.argv[2])
 
 try {
@@ -81,6 +89,52 @@ try {
     })
   })
 
+  // --- Wikimedia Commons: Bauteilfoto samt Lizenzangaben ---
+  await context.route('**/commons.wikimedia.org/w/api.php*', async (route) => {
+    commonsCalls++
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        query: {
+          pages: {
+            1: {
+              title: 'File:Brake disc caliper closeup.jpg',
+              index: 1,
+              imageinfo: [
+                {
+                  thumburl: 'https://upload.wikimedia.org/meraq-test.jpg',
+                  url: 'https://upload.wikimedia.org/meraq-test.jpg',
+                  descriptionurl: 'https://commons.wikimedia.org/wiki/File:Brake_disc.jpg',
+                  thumbwidth: 640,
+                  thumbheight: 480,
+                  extmetadata: {
+                    LicenseShortName: { value: 'CC BY-SA 4.0' },
+                    Artist: { value: '<a href="https://example.org">Testfotografin</a>' },
+                  },
+                },
+              ],
+            },
+            // Eine Zeichnung, die die Auswahl aussortieren muss
+            2: {
+              title: 'File:Brake disc diagram.svg',
+              index: 2,
+              imageinfo: [
+                {
+                  thumburl: 'https://upload.wikimedia.org/diagram.svg',
+                  extmetadata: { LicenseShortName: { value: 'CC BY-SA 4.0' } },
+                },
+              ],
+            },
+          },
+        },
+      }),
+    })
+  })
+  await context.route('**/upload.wikimedia.org/**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'image/png', body: PNG })
+  })
+
   const page = await context.newPage()
   page.on('pageerror', (e) => problems.push(`[pageerror] ${e.message.slice(0, 200)}`))
 
@@ -116,11 +170,23 @@ try {
 
   // Ein Treffer öffnet das Bauteil-Sheet
   await page.getByRole('button', { name: /Bremsscheibe & Sattel/ }).first().click()
-  await page.waitForTimeout(600)
+  // Auf das Foto warten statt auf die Uhr – unter Last dauert das Nachladen länger
+  await page
+    .locator('.anim-sheet figure img')
+    .waitFor({ timeout: 20000 })
+    .catch(() => problems.push('[foto] Das Bild erscheint nicht innerhalb von 20 Sekunden'))
   const sheet = await text()
   if (!sheet.includes('Wandelt Bewegungsenergie')) {
     problems.push('[suche] Der Treffer öffnet das Bauteil nicht')
   }
+
+  // --- Bauteilfoto: ohne Urheber und Lizenz darf es nicht gezeigt werden ---
+  const fotos = await page.locator('.anim-sheet figure img').count()
+  if (!fotos) problems.push('[foto] Zum Bauteil wird kein Foto angezeigt')
+  if (!sheet.includes('Testfotografin')) problems.push('[foto] Der Urheber fehlt am Bild')
+  if (!sheet.includes('CC BY-SA 4.0')) problems.push('[foto] Die Lizenz fehlt am Bild')
+  if (!sheet.includes('Wikimedia Commons')) problems.push('[foto] Die Quelle wird nicht genannt')
+  await page.screenshot({ path: `${OUT}/bauteil-foto.png` })
   // "Fertig" im Sheet-Kopf. Die Fläche mit aria-label "Schließen" liegt hinter
   // dem Sheet – ein Klick darauf trifft in Playwright das Sheet selbst.
   await page.getByRole('button', { name: 'Fertig' }).click()
@@ -248,6 +314,18 @@ try {
   if (/\d+\s*€\s*–\s*\d+\s*€/.test(eAuto)) {
     problems.push('[fahrzeugunabhängigkeit] Für ein nicht vorhandenes Bauteil werden Kosten genannt')
   }
+
+  // --- Das Foto wird nur einmal geholt, danach liegt es auf dem Gerät ---
+  await page.getByRole('button', { name: 'Fertig' }).click() // KI-Sheet zu
+  await page.waitForTimeout(400)
+  const nachErstemAufruf = commonsCalls
+  await goto('#/manual?teil=brake-disc')
+  await page.waitForTimeout(1500)
+  if (commonsCalls > nachErstemAufruf) {
+    problems.push(`[foto] Bei jedem Öffnen geht eine neue Anfrage hinaus (${commonsCalls})`)
+  }
+  await page.getByRole('button', { name: 'Fertig' }).click()
+  await page.waitForTimeout(400)
 
   // --- Kein horizontales Scrollen, auch mit langer Trefferliste ---
   const breite = await page.evaluate(() => ({

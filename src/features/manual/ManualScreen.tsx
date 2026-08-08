@@ -23,6 +23,7 @@ import { explainPart } from '../../lib/partExplain'
 import { partCostEstimate } from '../../lib/partCost'
 import { formatEur } from '../../lib/format'
 import { useActiveVehicle, useAppStore } from '../../store/useAppStore'
+import { PartPhoto } from './PartPhoto'
 import { ZoneScene } from './ZoneScene'
 
 // Three.js wiegt rund 150 kB gzip – erst laden, wenn die 3D-Ansicht wirklich gezeigt wird
@@ -340,6 +341,8 @@ export default function ManualScreen() {
       <Sheet open={!!spot} onClose={() => setSpot(null)} title={spot?.label}>
         {spot && (
           <div className="space-y-4">
+            <PartPhoto hotspot={spot} />
+
             <div>
               <p className="mb-1.5 text-[12.5px] font-semibold text-ink-faint">Funktion</p>
               <p className="text-[14px] leading-relaxed text-ink-muted">{spot.fn}</p>

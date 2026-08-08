@@ -19,6 +19,7 @@ const PURE = [
   ['Kalender-Datei', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-ics.mjs']],
   ['Kostenrahmen', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-part-cost.mjs']],
   ['Fahrzeugbild', ['--experimental-strip-types', 'scripts/test-vehicle-image.mjs']],
+  ['Bauteilfoto', ['--experimental-strip-types', 'scripts/test-part-image.mjs']],
 ]
 
 /** Über die Oberfläche – bekommt die Adresse des laufenden Servers */

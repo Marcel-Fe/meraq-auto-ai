@@ -16,6 +16,9 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'oil-cap',
         label: 'Öleinfülldeckel',
+        // Englisch, weil Dateien auf Commons fast immer englisch benannt sind –
+        // mit deutschen Begriffen findet die Suche dort kaum etwas
+        imageQuery: 'engine oil filler cap',
         x: 33,
         y: 30,
         pos3d: [1.35, 1.02, -0.18] as [number, number, number],
@@ -27,6 +30,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'oil-filter-housing',
         label: 'Ölfiltergehäuse',
+        imageQuery: 'oil filter automotive',
         x: 55,
         y: 26,
         pos3d: [1.20, 0.88, 0.22] as [number, number, number],
@@ -38,6 +42,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'air-filter-box',
         label: 'Luftfilterkasten',
+        imageQuery: 'air filter car engine',
         x: 20,
         y: 58,
         pos3d: [1.72, 0.98, -0.42] as [number, number, number],
@@ -49,6 +54,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'battery',
         label: 'Starterbatterie',
+        imageQuery: 'car battery',
         x: 76,
         y: 62,
         pos3d: [1.62, 0.95, 0.46] as [number, number, number],
@@ -60,6 +66,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'coolant-tank',
         label: 'Kühlmittel-Ausgleichsbehälter',
+        imageQuery: 'coolant expansion tank',
         x: 68,
         y: 34,
         pos3d: [1.78, 0.96, 0.30] as [number, number, number],
@@ -71,6 +78,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'brake-fluid',
         label: 'Bremsflüssigkeitsbehälter',
+        imageQuery: 'brake fluid reservoir',
         x: 84,
         y: 30,
         pos3d: [1.12, 0.99, 0.44] as [number, number, number],
@@ -82,6 +90,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'belt',
         label: 'Keilrippenriemen',
+        imageQuery: 'serpentine belt engine',
         x: 12,
         y: 34,
         pos3d: [1.55, 0.78, -0.52] as [number, number, number],
@@ -92,6 +101,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'turbo',
         label: 'Turbolader / Ladeluft',
+        imageQuery: 'turbocharger',
         x: 45,
         y: 68,
         pos3d: [1.30, 0.72, 0.30] as [number, number, number],
@@ -108,6 +118,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'cluster',
         label: 'Kombiinstrument',
+        imageQuery: 'instrument cluster car',
         x: 30,
         y: 38,
         pos3d: [0.62, 1.02, -0.38] as [number, number, number],
@@ -117,6 +128,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'obd-port',
         label: 'OBD-Diagnosebuchse',
+        imageQuery: 'OBD-II connector',
         x: 18,
         y: 66,
         pos3d: [0.70, 0.62, -0.52] as [number, number, number],
@@ -126,6 +138,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'fuse-box',
         label: 'Sicherungskasten',
+        imageQuery: 'fuse box car',
         x: 12,
         y: 50,
         pos3d: [0.78, 0.72, -0.66] as [number, number, number],
@@ -135,6 +148,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'cabin-filter',
         label: 'Innenraumfilter',
+        imageQuery: 'cabin air filter',
         x: 62,
         y: 60,
         pos3d: [0.88, 0.84, 0.40] as [number, number, number],
@@ -145,6 +159,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'ac-vent',
         label: 'Klimaanlage',
+        imageQuery: 'car air conditioning vent',
         x: 74,
         y: 36,
         pos3d: [0.60, 1.00, 0.30] as [number, number, number],
@@ -155,6 +170,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'seatbelt',
         label: 'Gurt & Airbag',
+        imageQuery: 'seat belt car',
         x: 46,
         y: 24,
         pos3d: [0.10, 1.10, -0.62] as [number, number, number],
@@ -171,6 +187,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'brake-disc',
         label: 'Bremsscheibe & Sattel',
+        imageQuery: 'brake disc caliper',
         x: 24,
         y: 44,
         pos3d: [1.35, 0.33, -0.78] as [number, number, number],
@@ -182,6 +199,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'shock',
         label: 'Stoßdämpfer & Feder',
+        imageQuery: 'shock absorber car',
         x: 48,
         y: 30,
         pos3d: [1.35, 0.62, -0.66] as [number, number, number],
@@ -192,6 +210,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'tire',
         label: 'Reifen',
+        imageQuery: 'car tire tread',
         x: 72,
         y: 60,
         pos3d: [-1.35, 0.33, 0.78] as [number, number, number],
@@ -203,6 +222,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'wheel-sensor',
         label: 'ABS-Raddrehzahlsensor',
+        imageQuery: 'ABS wheel speed sensor',
         x: 34,
         y: 66,
         pos3d: [1.35, 0.30, -0.62] as [number, number, number],
@@ -213,6 +233,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'exhaust',
         label: 'Abgasanlage',
+        imageQuery: 'car exhaust muffler',
         x: 58,
         y: 74,
         pos3d: [-1.60, 0.24, 0.24] as [number, number, number],
@@ -246,6 +267,7 @@ const ELECTRIC_HOTSPOTS = [
   {
     id: 'hv-battery',
     label: 'Hochvoltbatterie',
+    imageQuery: 'electric car battery pack',
     x: 50,
     y: 62,
     pos3d: [0.00, 0.28, 0.00] as [number, number, number],
@@ -260,6 +282,7 @@ const ELECTRIC_HOTSPOTS = [
   {
     id: 'charging-port',
     label: 'Ladeanschluss',
+    imageQuery: 'electric car charging port',
     x: 78,
     y: 40,
     pos3d: [1.05, 0.80, 0.92] as [number, number, number],
@@ -269,6 +292,7 @@ const ELECTRIC_HOTSPOTS = [
   {
     id: 'inverter',
     label: 'Leistungselektronik',
+    imageQuery: 'electric vehicle inverter',
     x: 32,
     y: 34,
     pos3d: [1.45, 0.90, 0.00] as [number, number, number],
@@ -301,6 +325,7 @@ export function manualZonesFor(vehicle: Vehicle): ManualZone[] {
             {
               id: 'chain',
               label: 'Antriebskette',
+              imageQuery: 'motorcycle drive chain',
               x: 62,
               y: 78,
               pos3d: [-1.35, 0.42, 0.28] as [number, number, number],

@@ -155,6 +155,16 @@ Erledigt ✅
     Belegt mit `npm run test:part` (Rechnung und Zuordnung) und `npm run test:partsearch`
     (der ganze Weg mit abgefangener KI-Antwort).
 
+15. **Bauteilfoto** ✅ — „wo sitzt es" beantwortet das Modell, „wie sieht es aus" nur ein
+    echtes Bild. Zu jedem Bauteil sucht die App ein frei lizenziertes Foto auf Wikimedia
+    Commons und zeigt es im Sheet mit Urheber und Lizenz. Gesucht wird mit einem eigenen
+    Begriff je Bauteil (`imageQuery`, englisch — so heißen die Dateien dort), nicht mit dem
+    deutschen Anzeigenamen. Die Auswahl wirft Zeichnungen, Patentskizzen, Logos und alles
+    ohne freie Lizenz weg und gibt im Zweifel **nichts** zurück: Ein falsches Bauteilfoto
+    wäre schlimmer als keines, der Nutzer sucht danach unter seiner Motorhaube. Treffer und
+    Misserfolge landen verkleinert in IndexedDB — jedes Öffnen des Sheets liefe sonst ins
+    Netz. Belegt mit `npm run test:partimage` (Auswahl und Lizenzen) und im UI-Test.
+
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff
