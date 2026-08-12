@@ -42,7 +42,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'air-filter-box',
         label: 'Luftfilterkasten',
-        imageQuery: 'air filter car engine',
+        imageQuery: 'engine air filter housing',
         x: 20,
         y: 58,
         pos3d: [1.72, 0.98, -0.42] as [number, number, number],
@@ -118,7 +118,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'cluster',
         label: 'Kombiinstrument',
-        imageQuery: 'instrument cluster car',
+        imageQuery: 'car dashboard instrument cluster',
         x: 30,
         y: 38,
         pos3d: [0.62, 1.02, -0.38] as [number, number, number],
@@ -159,7 +159,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'ac-vent',
         label: 'Klimaanlage',
-        imageQuery: 'car air conditioning vent',
+        imageQuery: 'car interior air vent',
         x: 74,
         y: 36,
         pos3d: [0.60, 1.00, 0.30] as [number, number, number],
@@ -199,7 +199,7 @@ export const MANUAL_ZONES: ManualZone[] = [
       {
         id: 'shock',
         label: 'Stoßdämpfer & Feder',
-        imageQuery: 'shock absorber car',
+        imageQuery: 'suspension strut shock absorber',
         x: 48,
         y: 30,
         pos3d: [1.35, 0.62, -0.66] as [number, number, number],

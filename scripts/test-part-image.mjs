@@ -110,6 +110,52 @@ console.log('Fahrzeugbezug und Trefferreihenfolge')
   )
 }
 
+console.log('Alter der Aufnahme')
+{
+  // Die echten Fälle: eine Zeichnung aus dem Autocar Handbook von 1935 und ein
+  // Chrysler Imperial von 1953 gewannen gegen heutige Aufnahmen
+  const daempfer = pickPartImage(
+    [
+      file('File:Hydraulic lever-arm shock absorber (Autocar Handbook, 1935).jpg', { rank: 0 }),
+      file('File:Shock absorber of a car.jpg', { rank: 4 }),
+    ],
+    'shock absorber car',
+  )
+  check(
+    'Eine Aufnahme von 1935 verliert gegen eine heutige',
+    daempfer?.title === 'File:Shock absorber of a car.jpg',
+    daempfer?.title ?? 'keiner',
+  )
+
+  const klima = pickPartImage(
+    [
+      file('File:1953 Imperial 2-tone with AC vents.jpg', { rank: 0 }),
+      file('File:Air conditioning vent in a car interior.jpg', { rank: 2 }),
+    ],
+    'car air conditioning vent',
+  )
+  check(
+    'Ein Oldtimer verliert gegen ein heutiges Fahrzeug',
+    klima?.title === 'File:Air conditioning vent in a car interior.jpg',
+    klima?.title ?? 'keiner',
+  )
+
+  check(
+    'Eine alte Aufnahme ohne Fahrzeugbezug reicht allein nicht',
+    pickPartImage([file('File:Shock absorber 1935.jpg')], 'shock absorber car') === undefined,
+  )
+  check(
+    'Eine heutige Aufnahme am Fahrzeug reicht allein sehr wohl',
+    pickPartImage([file('File:Shock absorber of a car.jpg')], 'shock absorber car')?.title ===
+      'File:Shock absorber of a car.jpg',
+  )
+
+  check(
+    'Eine Bildnummer ist keine Jahreszahl',
+    scoreCandidate(file('File:Car battery IMG 20231104.jpg'), 'car battery') > 0,
+  )
+}
+
 console.log('Lieber nichts als das Falsche')
 {
   // Der echte Fall: „FRA T19 car interior.jpg" ist eine Straßenbahn und traf

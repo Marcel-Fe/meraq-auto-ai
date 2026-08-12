@@ -30,7 +30,17 @@ export interface CommonsCandidate {
  * eines Jagdflugzeugs von 1943. Der Dateiname enthielt „instrument", mehr
  * brauchte es nicht.
  */
-const AUTOMOTIVE = /(car|auto|vehicle|motor|lorry|truck|kfz|pkw)/i
+const AUTOMOTIVE =
+  /(car|auto|vehicle|motor|lorry|truck|kfz|pkw|volkswagen|\bvw\b|audi|mercedes|\bbmw\b|opel|ford|skoda|seat|renault|peugeot|citro|fiat|toyota|hyundai|\bkia\b|mazda|nissan|volvo|porsche|tesla|dacia|jeep)/i
+
+/**
+ * Jahreszahl im Dateinamen, z. B. „1953 Imperial 2-tone with AC vents".
+ *
+ * Commons ist ein Archiv: Zum „Stoßdämpfer" gewann eine Zeichnung aus dem
+ * Autocar Handbook von 1935. Fachlich richtig, für jemanden mit einem heutigen
+ * Auto trotzdem wertlos.
+ */
+const YEAR = /\b(18|19|20)\d{2}\b/
 
 /**
  * Freie Lizenzen, die eine Anzeige mit Namensnennung erlauben.
@@ -79,8 +89,17 @@ export function scoreCandidate(candidate: CommonsCandidate, query: string): numb
   // Ein vollständiger Treffer des Begriffs ist mehr wert als zwei Einzelwörter
   if (file.includes(words.join(''))) score += 5
 
-  // Fahrzeugbezug im Dateinamen – sonst ist es womöglich ein Flugzeug
-  if (AUTOMOTIVE.test(file)) score += 8
+  // Fahrzeugbezug im Dateinamen – sonst ist es womöglich ein Flugzeug.
+  // Markennamen zählen mit: „The exhaust silencer of Audi TTS" sagt nirgends
+  // „car", zeigt aber zweifelsfrei ein Auto.
+  if (AUTOMOTIVE.test(file)) score += 12
+
+  // Alte Aufnahmen zeigen ein Bauteil, das es so nicht mehr gibt. Der Abzug
+  // wiegt schwerer als der Fahrzeugbonus: Ein Hebeldämpfer von 1935 sieht
+  // anders aus als jedes Federbein, das heute in einem Auto steckt.
+  const jahr = Number(YEAR.exec(file)?.[0] ?? 0)
+  if (jahr && jahr < 1990) score -= 24
+  else if (jahr && jahr < 2005) score -= 6
 
   // Commons sortiert nach Relevanz; die ersten Treffer sind meist die besseren
   if (typeof candidate.rank === 'number') score += Math.max(0, 6 - candidate.rank)
@@ -95,6 +114,16 @@ export function scoreCandidate(candidate: CommonsCandidate, query: string): numb
 }
 
 /**
+ * Ab hier ist ein Treffer gut genug, um ihn zu zeigen.
+ *
+ * Ein einzelnes zutreffendes Wort ohne Fahrzeugbezug reicht nicht: So gewann
+ * zum „Kombiinstrument" das Cockpit einer Kawasaki Ki-61. Die Schwelle
+ * entspricht etwa einem Bauteilwort **plus** erkennbarem Fahrzeugbezug – oder
+ * zwei zutreffenden Bauteilwörtern.
+ */
+const MIN_SCORE = 20
+
+/**
  * Wählt das beste Foto aus – oder keines.
  * Bei Gleichstand gewinnt der frühere Treffer, denn Commons sortiert nach
  * Relevanz.
@@ -106,7 +135,7 @@ export function pickPartImage(
   let best: { candidate: CommonsCandidate; score: number } | undefined
   for (const candidate of candidates) {
     const score = scoreCandidate(candidate, query)
-    if (score > 0 && (!best || score > best.score)) best = { candidate, score }
+    if (score >= MIN_SCORE && (!best || score > best.score)) best = { candidate, score }
   }
   return best?.candidate
 }
