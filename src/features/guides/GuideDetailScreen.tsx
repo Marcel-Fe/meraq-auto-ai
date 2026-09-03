@@ -4,11 +4,14 @@ import { Check, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, ProgressBar, SectionTitle, cn } from '../../components/ui'
 import { GUIDES } from '../../data/guides'
+import { repairJobsFor } from '../../data/parts'
 import { describeAiError, hasApiKey } from '../../lib/ai/client'
 import { adaptGuide, cachedAdaptation } from '../../lib/guideAdapt'
+import { guideCostComparison } from '../../lib/guideCost'
 import type { GuideAdaptation } from '../../types'
 import { useActiveVehicle, useAppStore, useGuideProgress } from '../../store/useAppStore'
 import { GuideAdaptationView } from './GuideAdaptationView'
+import { GuideCostCompare } from './GuideCostCompare'
 
 const DIFFICULTY_TONE = { einfach: 'ok', mittel: 'warn', schwer: 'danger' } as const
 
@@ -28,6 +31,14 @@ export default function GuideDetailScreen() {
   )
   const [adaptError, setAdaptError] = useState('')
   const [loading, setLoading] = useState(false)
+  const hourlyRate = useAppStore((s) => s.settings.hourlyRateEur)
+
+  // Die vergleichbare Werkstattposition ist schon auf Marke und Fahrzeugart
+  // umgerechnet – der Screen rechnet nur noch den Stundensatz dagegen
+  const job = useMemo(() => {
+    if (!vehicle || !guide?.jobId) return undefined
+    return repairJobsFor(vehicle).find((j) => j.id === guide.jobId)
+  }, [vehicle, guide?.jobId])
 
   if (!guide) {
     return (
@@ -72,6 +83,10 @@ export default function GuideDetailScreen() {
 
   const vehicleLabel = vehicle ? `Deinem ${vehicle.make} ${vehicle.model}` : 'Deinem Fahrzeug'
 
+  // Für Ungeübte dauert es länger – wenn die KI eine realistische Zeit genannt
+  // hat, zählt die, sonst die Angabe der Anleitung
+  const cost = guideCostComparison(job, hourlyRate, adapt?.timeNoviceMin ?? guide.durationMin)
+
   return (
     <Page>
       <PageHeader title={guide.title} subtitle={guide.category} backTo="/guides" />
@@ -98,6 +113,15 @@ export default function GuideDetailScreen() {
               </div>
             </div>
           </Card>
+        )}
+
+        {cost && job && (
+          <GuideCostCompare
+            cost={cost}
+            jobName={job.name}
+            safety={guide.safety}
+            hourlyRate={hourlyRate}
+          />
         )}
 
         <div className="grid grid-cols-1 gap-2.5">

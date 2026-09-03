@@ -111,6 +111,7 @@ brauchen die UI-Tests einen laufenden `npm run preview`:
 npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
 npm run test:ics        # Kalender-Datei gegen RFC 5545
 npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
+npm run test:guide      # selbst machen oder machen lassen, reine Logik
 npm run test:image      # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
 npm run test:partimage  # Auswahl des Bauteilfotos samt Lizenzprüfung, reine Logik
 npm run test:smoke      # 23 Screens im iPhone-Format, Screenshots in screenshots/

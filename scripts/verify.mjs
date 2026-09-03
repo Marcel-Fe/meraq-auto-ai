@@ -18,6 +18,7 @@ const PURE = [
   ['Rechenkerne', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-calc.mjs']],
   ['Kalender-Datei', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-ics.mjs']],
   ['Kostenrahmen', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-part-cost.mjs']],
+  ['Anleitungs-Vergleich', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-guide-cost.mjs']],
   ['Fahrzeugbild', ['--experimental-strip-types', 'scripts/test-vehicle-image.mjs']],
   ['Bauteilfoto', ['--experimental-strip-types', 'scripts/test-part-image.mjs']],
 ]

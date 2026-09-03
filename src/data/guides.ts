@@ -5,10 +5,17 @@ import { vehicleTraits, type VehicleTraits } from '../lib/vehicleProfile'
  * Allgemeingültige Wartungsanleitungen. Bewusst fahrzeugübergreifend formuliert –
  * die konkreten Drehmomente und Teilenummern stehen im Herstellerhandbuch,
  * darauf wird in den Schritten hingewiesen.
+ *
+ * `jobId` verweist auf die vergleichbare Werkstattposition aus `repairJobsFor()`
+ * und beantwortet damit „selbst machen oder machen lassen". Es ist bewusst nicht
+ * überall gesetzt: Kühlmittel *nachfüllen* ist nicht Kühlmittel *wechseln*, und
+ * eine Kette pflegen ist kein neuer Kettensatz. Ein schiefer Vergleich wäre
+ * schlimmer als keiner.
  */
 export const GUIDES: Guide[] = [
   {
     id: 'oil-change',
+    jobId: 'oil-service',
     title: 'Ölwechsel',
     category: 'Motor',
     durationMin: 45,
@@ -27,6 +34,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'air-filter',
+    jobId: 'air-filter',
     title: 'Luftfilter wechseln',
     category: 'Motor',
     durationMin: 20,
@@ -43,6 +51,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'brake-pads-front',
+    jobId: 'brake-pads-front',
     title: 'Bremsbeläge vorne wechseln',
     category: 'Bremsen',
     durationMin: 90,
@@ -61,6 +70,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'battery',
+    jobId: 'battery',
     title: 'Batterie wechseln',
     category: 'Elektrik',
     durationMin: 30,
@@ -78,6 +88,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'spark-plugs',
+    jobId: 'spark-plugs',
     title: 'Zündkerzen wechseln',
     category: 'Motor',
     durationMin: 60,
@@ -94,6 +105,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'cabin-filter',
+    jobId: 'cabin-filter',
     title: 'Innenraumfilter wechseln',
     category: 'Innenraum',
     durationMin: 25,
@@ -124,6 +136,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'tire-change',
+    jobId: 'wheel-swap',
     title: 'Räder wechseln',
     category: 'Fahrwerk',
     durationMin: 45,
