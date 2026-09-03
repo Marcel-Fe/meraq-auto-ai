@@ -10,6 +10,7 @@
 import { guideCostComparison } from '../src/lib/guideCost.ts'
 import { sanitizeAdaptation } from '../src/lib/guideAdapt.ts'
 import { GUIDES, guidesFor } from '../src/data/guides.ts'
+import { findHotspotId } from '../src/data/manual.ts'
 import { repairJobsFor } from '../src/data/parts.ts'
 
 const problems = []
@@ -101,6 +102,34 @@ console.log('Vergleich bleibt fahrzeuggerecht')
   const bikeJobs = repairJobsFor(bike)
   check('Motorrad bekommt kein Räder-Umstecken', !bikeJobs.some((j) => j.id === 'wheel-swap'))
   check('Motorrad bekommt keinen Innenraumfilter', !bikeJobs.some((j) => j.id === 'cabin-filter'))
+}
+
+console.log('Von der Anleitung zum Bauteil')
+{
+  const golf = vehicle()
+  const ziel = (g) => findHotspotId([g.title, ...g.parts].join(' '), golf)
+  const guide = (id) => GUIDES.find((g) => g.id === id)
+  const faelle = [
+    ['oil-change', 'oil-cap'],
+    ['air-filter', 'air-filter-box'],
+    ['brake-pads-front', 'brake-disc'],
+    ['battery', 'battery'],
+    ['cabin-filter', 'cabin-filter'],
+    ['coolant', 'coolant-tank'],
+    ['tire-change', 'tire'],
+    ['jump-start', 'battery'],
+  ]
+  for (const [id, erwartet] of faelle) {
+    const treffer = ziel(guide(id))
+    check(`"${guide(id).title}" → ${erwartet}`, treffer === erwartet, `gefunden: ${treffer ?? 'nichts'}`)
+  }
+  check('Ohne Bezug kein Sprung', ziel(guide('wipers')) === undefined, `${ziel(guide('wipers'))}`)
+
+  const eAuto = vehicle({ fuel: 'Elektro', make: 'Tesla', model: 'Model 3' })
+  check(
+    'E-Auto springt von der Batterie-Anleitung nicht ins Leere',
+    findHotspotId([guide('battery').title, ...guide('battery').parts].join(' '), eAuto) === 'battery',
+  )
 }
 
 console.log('Hinweise der KI zu den Schritten')

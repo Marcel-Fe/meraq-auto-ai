@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Check, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
+import { Box, Check, ChevronRight, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, ProgressBar, SectionTitle, cn } from '../../components/ui'
 import { GUIDES } from '../../data/guides'
+import { findHotspotId } from '../../data/manual'
 import { repairJobsFor } from '../../data/parts'
 import { describeAiError, hasApiKey } from '../../lib/ai/client'
 import { adaptGuide, cachedAdaptation } from '../../lib/guideAdapt'
@@ -39,6 +40,14 @@ export default function GuideDetailScreen() {
     if (!vehicle || !guide?.jobId) return undefined
     return repairJobsFor(vehicle).find((j) => j.id === guide.jobId)
   }, [vehicle, guide?.jobId])
+
+  // „Wo sitzt das überhaupt?" – die Zuordnung von Begriff zu Bauteil liegt in
+  // den Daten, der Screen fragt nur nach. Ohne Treffer bleibt der Weg aus:
+  // ein Sprung zum falschen Bauteil wäre schlimmer als keiner
+  const hotspotId = useMemo(() => {
+    if (!vehicle || !guide) return undefined
+    return findHotspotId([guide.title, ...guide.parts].join(' '), vehicle)
+  }, [vehicle, guide])
 
   if (!guide) {
     return (
@@ -163,6 +172,25 @@ export default function GuideDetailScreen() {
             </Card>
           )}
         </div>
+
+        {hotspotId && (
+          <Link to={`/manual?teil=${hotspotId}`}>
+            <Card className="border-brand-blue/25 transition active:scale-[.99]">
+              <div className="flex items-center gap-3">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-brand-blue/15 text-brand-blue">
+                  <Box size={20} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] font-semibold">Wo sitzt das am Fahrzeug?</span>
+                  <span className="block text-[12.5px] text-ink-muted">
+                    Stelle im Modell zeigen, bevor Du anfängst
+                  </span>
+                </span>
+                <ChevronRight size={18} className="shrink-0 text-ink-faint" />
+              </div>
+            </Card>
+          </Link>
+        )}
 
         {/* Erst die Abweichungen an diesem Fahrzeug, dann die Schritte – die
             Hinweise stehen anschließend direkt an dem Schritt, zu dem sie gehören */}
