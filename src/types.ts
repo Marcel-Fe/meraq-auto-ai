@@ -396,6 +396,16 @@ export interface InvoicePosition {
   why?: string
   /** Übliches deutsches Wort für das betroffene Bauteil */
   partHint?: string
+  /**
+   * Englischer Suchbegriff für ein Foto auf Wikimedia Commons. Nötig, weil die
+   * App nur gut zwei Dutzend Bauteile fest kennt – einen Querlenker kann sie
+   * sonst weder zeigen noch verorten.
+   */
+  imageQuery?: string
+  /** Wo das Teil am Fahrzeug sitzt, in Alltagssprache */
+  location?: string
+  /** Grober Bereich für den Sprung ins Modell, wenn kein Bauteil zugeordnet ist */
+  zone?: 'engine' | 'chassis' | 'interior'
   /** Vergleichbare Werkstattposition aus `repairJobsFor()` */
   jobId?: string
   /** Betrag dieser Position in Euro, falls lesbar */

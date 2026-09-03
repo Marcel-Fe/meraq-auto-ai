@@ -107,6 +107,16 @@ Für jede Position:
 - "partHint": das übliche deutsche Wort für das betroffene Bauteil, in der Einzahl und ohne
   Zusätze ("Bremsscheibe", "Zündkerze", "Innenraumfilter"). Bei reiner Arbeit oder Gebühren
   (Altölentsorgung, Kleinteile, Entsorgung, Arbeitslohn) lässt Du das Feld weg.
+- "imageQuery": zwei bis vier **englische** Wörter, mit denen sich auf Wikimedia Commons ein
+  Foto genau dieses Bauteils finden lässt – so heißen die Dateien dort. Also "car control arm
+  suspension" statt "Querlenker", "brake caliper car" statt "Bremssattel". Kein Markenname,
+  keine Modellbezeichnung. Bei reiner Arbeit oder Gebühren weglassen.
+- "location": wo das Teil an dieser Fahrzeugart sitzt, in Alltagssprache und so, dass der
+  Nutzer die Stelle am eigenen Fahrzeug findet ("unten an der Vorderachse, zwischen Radträger
+  und Karosserie"). Bei reiner Arbeit oder Gebühren weglassen.
+- "zone": in welchem Bereich das liegt – "engine" für Motorraum und Antrieb, "chassis" für
+  Fahrwerk, Räder, Bremsen und Abgasanlage, "interior" für Innenraum. Nur setzen, wenn Du
+  Dir sicher bist.
 - "priceEur": der Betrag dieser Zeile, wenn er lesbar ist – brutto, wenn die Rechnung brutto
   ausweist. Nicht rechnen, nicht schätzen, im Zweifel weglassen.
 - "kind" und "necessity": Einordnung der Position. "unklar" ist eine erlaubte und oft die

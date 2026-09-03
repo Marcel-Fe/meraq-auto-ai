@@ -50,6 +50,18 @@ const ANSWER = {
       necessity: 'nötig',
     },
     {
+      label: 'Querlenker vorne links ersetzt',
+      plain: 'Ein Teil der Radaufhängung wurde getauscht – es verbindet das Rad mit der Karosserie und hält es in Spur.',
+      why: 'Sind die Gummilager im Querlenker ausgeschlagen, poltert es und die Spur stimmt nicht mehr.',
+      partHint: 'Querlenker',
+      imageQuery: 'car control arm suspension',
+      location: 'Unten an der Vorderachse, zwischen Radträger und Karosserie.',
+      zone: 'chassis',
+      priceEur: 289.9,
+      kind: 'Reparatur',
+      necessity: 'nötig',
+    },
+    {
       label: 'Altölentsorgung',
       plain: 'Gebühr für die vorschriftsmäßige Entsorgung des alten Motoröls.',
       kind: 'Sonstiges',
@@ -112,6 +124,11 @@ try {
   })
 
   await context.route('**/commons.wikimedia.org/w/api.php*', async (route) => {
+    // Der Dateiname richtet sich nach dem Suchbegriff – sonst weist die Auswahl
+    // den Treffer zu Recht ab, und der Test prüfte nur seine eigene Attrappe
+    const term = decodeURIComponent(
+      new URL(route.request().url()).searchParams.get('gsrsearch') ?? 'car part',
+    )
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -119,7 +136,7 @@ try {
         query: {
           pages: {
             1: {
-              title: 'File:Car engine oil filter closeup.jpg',
+              title: `File:${term} closeup photo.jpg`,
               index: 1,
               imageinfo: [
                 {
@@ -245,7 +262,19 @@ try {
   }
 
   // --- Das Bauteil: Foto und Sprung ins Modell ---
-  await page.getByRole('button', { name: /Wie das Teil aussieht/ }).first().click()
+  // Auch Teile, die die App nicht fest kennt (Querlenker), muessen ein Bild und
+  // eine Verortung bekommen – sonst bleibt genau die Frage offen, wegen der man
+  // die Rechnung ueberhaupt scannt
+  if (!erklaert.includes('Querlenker vorne links ersetzt')) {
+    problems.push('[erklärung] Die unbekannte Position fehlt in der Anzeige')
+  }
+  const aufklappen = page.getByRole('button', { name: /Wie das Teil aussieht/ })
+  const anzahl = await aufklappen.count()
+  if (anzahl !== 3) {
+    problems.push(`[bild] Es gibt ${anzahl} aufklappbare Bauteile statt 3 (Gebuehrenzeile darf keines haben)`)
+  }
+  for (let i = 0; i < anzahl; i++) await aufklappen.nth(i).click()
+  await page.waitForTimeout(400)
   await page
     .locator('figure img')
     .first()
@@ -257,7 +286,16 @@ try {
   if (!/Wo sitzt .*am Fahrzeug/.test(mitFoto)) {
     problems.push('[modell] Der Sprung zur Stelle am Fahrzeug fehlt')
   }
+  if (!mitFoto.includes('Unten an der Vorderachse')) {
+    problems.push('[modell] Beim unbekannten Teil fehlt die Angabe, wo es sitzt')
+  }
+  if (!mitFoto.includes('Bereich am Fahrzeug zeigen')) {
+    problems.push('[modell] Beim unbekannten Teil fehlt der Weg in den Bereich des Modells')
+  }
+  const bilder = await page.locator('figure img').count()
+  if (bilder < 3) problems.push(`[foto] Nur ${bilder} von 3 Bauteilen zeigen ein Bild`)
   await page.screenshot({ path: `${OUT}/bauteil.png` })
+
 
   // Der Verweis führt wirklich ins Modell
   await page.getByRole('link', { name: /Wo sitzt/ }).first().click()
@@ -289,7 +327,30 @@ try {
   if (!nachher.includes('Übernommen')) problems.push('[übernahme] Keine Rückmeldung nach dem Speichern')
   await page.screenshot({ path: `${OUT}/uebernommen.png` })
 
+  // Der Bereichs-Verweis eines nicht hinterlegten Teils muss im Modell die
+  // richtige Zone aufschlagen. Zuletzt geprüft, weil er den Screen verlässt.
+  const klappen = page.getByRole('button', { name: /Wie das Teil aussieht/ })
+  for (let i = 0; i < (await klappen.count()); i++) await klappen.nth(i).click()
+  await page.waitForTimeout(400)
+  await page.getByRole('link', { name: 'Bereich am Fahrzeug zeigen' }).first().click()
+  await page.waitForTimeout(1500)
+  const zone = await page.locator('div.overflow-x-auto > button.brand-gradient').first().innerText()
+  if (!/Fahrwerk/.test(zone)) {
+    problems.push(`[modell] Der Bereichs-Verweis öffnet die falsche Zone (aktiv: ${zone})`)
+  }
+  if ((await page.evaluate(() => window.location.hash)).includes('bereich=')) {
+    problems.push('[modell] Der Bereichs-Parameter bleibt in der Adresse stehen')
+  }
+  await page.screenshot({ path: `${OUT}/bereich.png` })
+
   await goto('#/more')
+  // Auf die Zeile warten statt auf die Uhr – nach dem Modell-Umweg braucht der
+  // Screen einen Moment, und ein fester Wert macht die Pruefung launisch
+  await page
+    .getByText('Autohaus Beispiel')
+    .first()
+    .waitFor({ timeout: 15000 })
+    .catch(() => {})
   const verlauf = await text()
   if (!verlauf.includes('Autohaus Beispiel')) {
     problems.push('[übernahme] Der Beleg steht nicht im Verlauf')

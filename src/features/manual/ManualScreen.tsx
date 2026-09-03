@@ -83,6 +83,16 @@ export default function ManualScreen() {
     setParams({}, { replace: true })
   }, [wantedId, zones, setParams])
 
+  // Aus der Rechnungserklärung: /manual?bereich=<zone> zeigt den Bereich, wenn
+  // die App zum genannten Teil kein eigenes Bauteil kennt (z. B. Querlenker).
+  // Kein Sheet – hier gibt es nichts aufzuschlagen, nur etwas zu zeigen.
+  const wantedZone = params.get('bereich')
+  useEffect(() => {
+    if (!wantedZone) return
+    if (zones.some((z) => z.id === wantedZone)) setZoneId(wantedZone)
+    setParams({}, { replace: true })
+  }, [wantedZone, zones, setParams])
+
   // Beim Wechsel des Bauteils die Erklärung des vorigen wegräumen
   const spotId = spot?.id
   useEffect(() => {

@@ -21,6 +21,7 @@ import { SYSTEM_INVOICE_EXPLAIN, vehicleContext } from './ai/prompts'
 
 const KINDS = ['Wartung', 'Verschleiß', 'Reparatur', 'Material', 'Arbeitslohn', 'Sonstiges']
 const NECESSITY = ['nötig', 'vorbeugend', 'Komfort', 'unklar']
+const ZONES = ['engine', 'chassis', 'interior']
 
 const MAINTENANCE_KINDS: MaintenanceKind[] = [
   'oil',
@@ -72,6 +73,21 @@ function schemaFor(jobs: RepairJob[]) {
               type: 'string',
               description:
                 'Übliches deutsches Wort für das betroffene Bauteil, Einzahl, ohne Zusätze. Bei reiner Arbeit oder Gebühren weglassen.',
+            },
+            imageQuery: {
+              type: 'string',
+              description:
+                'Zwei bis vier englische Wörter, um auf Wikimedia Commons ein Foto dieses Bauteils zu finden, z. B. "car control arm suspension". Kein Markenname.',
+            },
+            location: {
+              type: 'string',
+              description: 'Wo das Teil an dieser Fahrzeugart sitzt, in Alltagssprache',
+            },
+            zone: {
+              type: 'string',
+              enum: ZONES,
+              description:
+                'Bereich am Fahrzeug: engine = Motorraum und Antrieb, chassis = Fahrwerk, Räder, Bremsen, Abgas, interior = Innenraum',
             },
             jobId: {
               type: 'string',
@@ -155,6 +171,9 @@ export function sanitizeInvoice(answer: InvoiceExplanation, knownJobIds: string[
         plain: (p?.plain ?? '').trim(),
         why: p?.why?.trim() || undefined,
         partHint: p?.partHint?.trim() || undefined,
+        imageQuery: p?.imageQuery?.trim() || undefined,
+        location: p?.location?.trim() || undefined,
+        zone: (ZONES.includes(p?.zone ?? '') ? p.zone : undefined) as InvoicePosition['zone'],
         jobId: p?.jobId && jobs.has(p.jobId) ? p.jobId : undefined,
         // Über 50.000 € ist keine Rechnungszeile mehr, sondern ein Lesefehler
         priceEur: Number.isFinite(price) && price > 0 && price < 50_000 ? Math.round(price * 100) / 100 : undefined,

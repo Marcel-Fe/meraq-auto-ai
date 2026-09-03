@@ -46,6 +46,27 @@ export function InvoicePositionCard({
   const [open, setOpen] = useState(false)
   const check = positionPriceCheck(position, job, hourlyRate)
 
+  /**
+   * Die App kennt gut zwei Dutzend Bauteile fest – eine Rechnung nennt auch
+   * Querlenker, Radlager oder Spurstangenkopf. Für die baut sie aus dem
+   * englischen Suchbegriff der KI ein Behelfs-Bauteil, damit dieselbe
+   * Fotosuche greift. Die Id bleibt dabei stabil, sonst wäre der
+   * Zwischenspeicher wertlos.
+   */
+  const shown: ManualHotspot | undefined =
+    hotspot ??
+    (position.imageQuery
+      ? {
+          id: `frei:${position.imageQuery.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          label: position.partHint ?? position.label,
+          imageQuery: position.imageQuery,
+          x: 0,
+          y: 0,
+          fn: position.plain,
+          problems: [],
+        }
+      : undefined)
+
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
@@ -97,7 +118,7 @@ export function InvoicePositionCard({
         </div>
       )}
 
-      {hotspot && (
+      {shown && (
         <div className="mt-3">
           <button
             type="button"
@@ -105,7 +126,7 @@ export function InvoicePositionCard({
             className="flex min-h-[44px] w-full items-center gap-2 text-[13px] font-medium text-brand-blue active:opacity-70"
           >
             <ImageIcon size={15} />
-            Wie das Teil aussieht
+            Wie das Teil aussieht und wo es sitzt
             <ChevronDown
               size={15}
               className={cn('ml-auto transition-transform', open && 'rotate-180')}
@@ -114,15 +135,31 @@ export function InvoicePositionCard({
 
           {open && (
             <div className="space-y-3 pt-1">
-              <PartPhoto hotspot={hotspot} />
-              <p className="text-[12.5px] leading-relaxed text-ink-muted">{hotspot.fn}</p>
-              <Link
-                to={`/manual?teil=${hotspot.id}`}
-                className="flex min-h-[44px] items-center gap-2 text-[13px] font-medium text-brand-blue"
-              >
-                <Box size={15} />
-                Wo sitzt „{hotspot.label}" am Fahrzeug?
-              </Link>
+              <PartPhoto hotspot={shown} />
+
+              <p className="text-[12.5px] leading-relaxed text-ink-muted">
+                {position.location ?? hotspot?.fn}
+              </p>
+
+              {hotspot ? (
+                <Link
+                  to={`/manual?teil=${hotspot.id}`}
+                  className="flex min-h-[44px] items-center gap-2 text-[13px] font-medium text-brand-blue"
+                >
+                  <Box size={15} />
+                  Wo sitzt „{hotspot.label}" am Fahrzeug?
+                </Link>
+              ) : (
+                position.zone && (
+                  <Link
+                    to={`/manual?bereich=${position.zone}`}
+                    className="flex min-h-[44px] items-center gap-2 text-[13px] font-medium text-brand-blue"
+                  >
+                    <Box size={15} />
+                    Bereich am Fahrzeug zeigen
+                  </Link>
+                )
+              )}
             </div>
           )}
         </div>

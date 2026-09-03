@@ -99,12 +99,21 @@ console.log('Bereinigung der KI-Antwort')
       { label: '', plain: 'ohne Bezeichnung', kind: 'Material' },
       { label: 'ohne Erklärung', plain: '   ', kind: 'Material' },
       { label: 'Kleinteile', plain: 'Schrauben und Dichtungen', kind: 'Quatsch', priceEur: 999999 },
+      {
+        label: 'Querlenker vorne links',
+        plain: 'Teil der Radaufhängung',
+        kind: 'Reparatur',
+        imageQuery: '  car control arm suspension  ',
+        location: '  Unten an der Vorderachse  ',
+        zone: 'chassis',
+      },
+      { label: 'Radlager', plain: 'Lager im Rad', kind: 'Reparatur', zone: 'unter der Haube' },
     ],
     questions: ['Wurde der Dichtring erneuert?', '  '],
     maintenanceKinds: ['oil', 'nicht-existent'],
   }
   const c = sanitizeInvoice(roh, ['oil-service', 'brake-pads-front'])
-  check('Zeilen ohne Text fliegen raus', c.positions.length === 3, `${c.positions.length}`)
+  check('Zeilen ohne Text fliegen raus', c.positions.length === 5, `${c.positions.length}`)
   check('gültige jobId bleibt', c.positions[0].jobId === 'oil-service')
   check('erfundene jobId fliegt raus', c.positions[1].jobId === undefined)
   check('unbekannte Art wird zu „Sonstiges"', c.positions[2].kind === 'Sonstiges', c.positions[2].kind)
@@ -112,6 +121,11 @@ console.log('Bereinigung der KI-Antwort')
   check('leere Frage fliegt raus', c.questions.length === 1)
   check('unbekannte Wartungsart fliegt raus', c.maintenanceKinds.length === 1)
   check('Zusammenfassung ohne Leerraum', c.summary === 'Inspektion mit Ölwechsel.')
+
+  check('Bildsuchbegriff ohne Leerraum', c.positions[3].imageQuery === 'car control arm suspension')
+  check('Sitz des Teils ohne Leerraum', c.positions[3].location === 'Unten an der Vorderachse')
+  check('gültiger Bereich bleibt', c.positions[3].zone === 'chassis')
+  check('erfundener Bereich fliegt raus', c.positions[4].zone === undefined, `${c.positions[4].zone}`)
 
   const leer = sanitizeInvoice({ readable: true, summary: 'x', positions: [] }, [])
   check('ohne erkennbare Zeilen gilt der Beleg als unlesbar', leer.readable === false)
