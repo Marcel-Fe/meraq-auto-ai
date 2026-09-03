@@ -129,34 +129,41 @@ export async function askGoogle(
   let buffer = ''
   let acc = ''
 
+  const consume = (event: string) => {
+    for (const line of event.split(/\r?\n/)) {
+      if (!line.startsWith('data:')) continue
+      const payload = line.slice(5).trim()
+      if (!payload || payload === '[DONE]') continue
+      try {
+        const chunk = JSON.parse(payload)
+        for (const part of chunk?.candidates?.[0]?.content?.parts ?? []) {
+          if (typeof part.text === 'string' && part.text) {
+            acc += part.text
+            opts.onText?.(part.text)
+          }
+        }
+      } catch {
+        /* unvollständiges Ereignis – kommt mit dem nächsten Puffer nach */
+      }
+    }
+  }
+
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
     buffer += decoder.decode(value, { stream: true })
 
-    // Server-sent events: Ereignisse sind durch eine Leerzeile getrennt
-    const events = buffer.split('\n\n')
+    // Server-sent events sind durch eine Leerzeile getrennt. Google schickt sie
+    // mit CRLF – nur auf "\n\n" zu trennen findet kein einziges Ereignis, und
+    // die Antwort bliebe still leer.
+    const events = buffer.split(/\r?\n\r?\n/)
     buffer = events.pop() ?? ''
-
-    for (const event of events) {
-      for (const line of event.split('\n')) {
-        if (!line.startsWith('data:')) continue
-        const payload = line.slice(5).trim()
-        if (!payload || payload === '[DONE]') continue
-        try {
-          const chunk = JSON.parse(payload)
-          for (const part of chunk?.candidates?.[0]?.content?.parts ?? []) {
-            if (typeof part.text === 'string' && part.text) {
-              acc += part.text
-              opts.onText?.(part.text)
-            }
-          }
-        } catch {
-          /* unvollständiges Ereignis – kommt mit dem nächsten Puffer nach */
-        }
-      }
-    }
+    for (const event of events) consume(event)
   }
+
+  // Das letzte Ereignis hat oft keine Leerzeile hinter sich – ohne diesen
+  // Abschluss fehlte der Schlusssatz jeder Antwort
+  if (buffer.trim()) consume(buffer)
 
   return acc
 }

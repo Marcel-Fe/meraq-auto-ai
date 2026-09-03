@@ -47,11 +47,19 @@ await context.route('**/generativelanguage.googleapis.com/**/models?*', async (r
 await context.route('**/generativelanguage.googleapis.com/**:streamGenerateContent*', async (route) => {
   seen.stream++
   lastGoogleBody = JSON.parse(route.request().postData() ?? '{}')
-  const chunk = (text) => `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })}\n\n`
+  // Genau so, wie Google es wirklich schickt: Ereignisse durch CRLF getrennt und
+  // hinter dem letzten keine Leerzeile. Ein Parser, der nur "\n\n" kennt oder den
+  // Rest im Puffer liegen lässt, liefert hier eine still leere Antwort – dieser
+  // Fehler war in der App und blieb unbemerkt, weil der Test brav "\n\n" schickte.
+  const event = (text) => `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })}`
   await route.fulfill({
     status: 200,
     contentType: 'text/event-stream',
-    body: chunk('Der Bremsbelag ') + chunk('ist ein Verschleißteil ') + chunk('und gehört in die Werkstatt.'),
+    body: [
+      event('Der Bremsbelag '),
+      event('ist ein Verschleißteil '),
+      event('und gehört in die Werkstatt.'),
+    ].join('\r\n\r\n'),
   })
 })
 
