@@ -165,6 +165,13 @@ function jobFor(kind: MaintenanceKind, jobs: RepairJob[]): RepairJob | undefined
   return undefined
 }
 
+/** „Seit 1 Monat" statt „Seit 1 Monaten" – bei einem Betrag daneben fällt so etwas auf */
+function overdueSince(days: number): string {
+  const months = Math.abs(Math.round(days / 30.44))
+  if (months <= 1) return 'Seit einem Monat'
+  return `Seit ${months} Monaten`
+}
+
 function daysUntil(iso: string, at: Date): number | null {
   const due = new Date(iso)
   if (Number.isNaN(due.getTime())) return null
@@ -249,7 +256,7 @@ export function valueAdjustments(vehicle: Vehicle, context: SellingContext = {})
       out.push({
         id: 'hu-expired',
         label: 'HU abgelaufen',
-        reason: `Seit ${Math.abs(Math.round(huDays / 30.44)) || 1} Monaten fällig. Ohne Plakette darf der Käufer nicht losfahren – und weiß nicht, was für sie noch nötig wird.`,
+        reason: `${overdueSince(huDays)} fällig. Ohne Plakette darf der Käufer nicht losfahren – und weiß nicht, was für sie noch nötig wird.`,
         amountEur: -amount,
         formula: `HU + AU ${euro(fee)}  +  ${(HU_RISK_SHARE * 100).toLocaleString('de-DE')} % Risiko (${euro(risk)}) = ${euro(amount)}`,
       })

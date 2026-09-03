@@ -110,6 +110,7 @@ brauchen die UI-Tests einen laufenden `npm run preview`:
 ```bash
 npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
 npm run test:ics        # Kalender-Datei gegen RFC 5545
+npm run test:value      # Preisuntergrenze, Zu-/Abschläge und Verkaufs-Check, reine Logik
 npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
 npm run test:guide      # selbst machen oder machen lassen, reine Logik
 npm run test:invoice    # Preis-Einordnung der Rechnung und Bereinigung, reine Logik

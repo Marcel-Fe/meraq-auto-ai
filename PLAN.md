@@ -199,6 +199,25 @@ Erledigt ✅
     Kilometerstand **des Belegs**. Belegt mit `npm run test:invoice` (Rechnung, Bereinigung,
     Zuordnung) und `npm run test:invoicescan` (der ganze Weg mit abgefangener KI-Antwort).
 
+18. **Was ist mein Auto noch wert – und was ist die Untergrenze?** ✅ — `/value` rechnete
+    einen Marktwert und ließ die Frage offen, mit der jemand vor dem Verkauf steht: Unter
+    welchem Preis gebe ich es unter Wert weg? Und die Zahl kannte das Fahrzeug nur auf dem
+    Papier — abgelaufene HU, offene Fehlercodes und überfällige Wartung änderten nichts.
+    Jetzt nennt `sellingFloor()` (`src/lib/sellingPrice.ts`) eine begründete Untergrenze:
+    den Händler-Ankauf, denn den bekommt man sofort und ohne Aufwand. `valueAdjustments()`
+    greift **nach** `valuate()` und lässt die Formel unberührt — überfällige Wartung wird zur
+    Nachholrechnung aus der passenden Werkstattposition und dem eingestellten Stundensatz,
+    Fehlercodes und HU-Termin zu einem offengelegten Anteil, belegte Wartung zu einem
+    gedeckelten Aufschlag. Wo die Grundlage fehlt (keine Werkstattposition, kein Stundensatz,
+    kein Kontext), entsteht **kein** Posten; der Nachschlagen-Screen sieht deshalb aus wie
+    bisher. Fahrzeugunabhängig, weil die Beträge aus `repairJobsFor()` kommen: Ein E-Auto
+    bekommt keinen Zahnriemen-Abschlag. Dazu eine zweite Meinung der KI
+    (`SYSTEM_MARKET_VALUE`, `marketValue.ts`) — Preisspanne, Nachfrage, Verkaufsdauer; weicht
+    sie stark von der eigenen Rechnung ab, benennt die App den Unterschied statt ihn zu
+    verstecken, und die Untergrenze bleibt die gerechnete. Der Verkaufs-Check sammelt, was den
+    Preis belegt, was ihn drückt und was noch fehlt — alles aus Daten, die schon in der App
+    liegen. Belegt mit `npm run test:value` (83 Fälle) und im Fahrzeugtest.
+
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff

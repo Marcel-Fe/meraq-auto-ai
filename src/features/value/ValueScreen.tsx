@@ -13,8 +13,9 @@ import {
 } from '../../store/useAppStore'
 import { repairJobsFor } from '../../data/parts'
 import { valuate, valueHistory } from '../../lib/valuation'
-import { sellingFloor } from '../../lib/sellingPrice'
+import { sellingChecklist, sellingFloor } from '../../lib/sellingPrice'
 import MarketOpinionSection from './MarketOpinion'
+import SellingCheck from './SellingCheck'
 import { formatEur, formatMonth, formatNumber } from '../../lib/format'
 
 const RANGES = [
@@ -55,6 +56,14 @@ export default function ValueScreen() {
           })
         : null,
     [vehicle, valuation, maintenance, activities, diagnoses, documents, hourlyRateEur],
+  )
+
+  const checklist = useMemo(
+    () =>
+      vehicle
+        ? sellingChecklist(vehicle, { maintenance, activities, diagnoses, documents })
+        : [],
+    [vehicle, maintenance, activities, diagnoses, documents],
   )
 
   if (!vehicle || !valuation || !floor) return null
@@ -276,6 +285,8 @@ export default function ValueScreen() {
           </section>
         )}
 
+        <SellingCheck points={checklist} floor={floor.floor} />
+
         <section>
           <SectionTitle title="Restwert-Prognose" />
           <Card className="flex items-center justify-between gap-3">
@@ -336,8 +347,9 @@ export default function ValueScreen() {
               <span>
                 Diese Zahl stammt aus der oben gezeigten Rechnung, nicht aus einer Marktdatenbank.
                 Echte Bewertungen (DAT, Schwacke) berücksichtigen Ausstattung, Region und Nachfrage –
-                dafür braucht es kostenpflichtige Daten. Nutze den Wert als Orientierung, nicht als
-                Verhandlungsgrundlage. Genauer wird es, wenn Du in den Fahrzeugdaten den echten
+                dafür braucht es kostenpflichtige Daten. Für die Verhandlung ist trotzdem die
+                Untergrenze weiter oben die belastbare Größe: Sie steht auf dem, was ein Händler
+                heute zahlen würde. Genauer wird alles, wenn Du in den Fahrzeugdaten den echten
                 Neupreis und den ehrlichen Zustand einträgst.
               </span>
             </span>
