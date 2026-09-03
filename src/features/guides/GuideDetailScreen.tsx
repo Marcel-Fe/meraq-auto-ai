@@ -1,6 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Box, Check, ChevronRight, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
+import {
+  Box,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Package,
+  RotateCcw,
+  ShieldAlert,
+  Sparkles,
+  Wrench,
+} from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, ProgressBar, SectionTitle, cn } from '../../components/ui'
 import { GUIDES } from '../../data/guides'
@@ -10,7 +21,13 @@ import { describeAiError, hasApiKey } from '../../lib/ai/client'
 import { adaptGuide, cachedAdaptation } from '../../lib/guideAdapt'
 import { guideCostComparison } from '../../lib/guideCost'
 import type { GuideAdaptation } from '../../types'
-import { useActiveVehicle, useAppStore, useGuideProgress } from '../../store/useAppStore'
+import { formatKm, todayIso } from '../../lib/format'
+import {
+  useActiveVehicle,
+  useAppStore,
+  useGuideProgress,
+  useVehicleMaintenance,
+} from '../../store/useAppStore'
 import { GuideAdaptationView } from './GuideAdaptationView'
 import { GuideCostCompare } from './GuideCostCompare'
 
@@ -33,6 +50,17 @@ export default function GuideDetailScreen() {
   const [adaptError, setAdaptError] = useState('')
   const [loading, setLoading] = useState(false)
   const hourlyRate = useAppStore((s) => s.settings.hourlyRateEur)
+  const maintenance = useVehicleMaintenance()
+  const completeMaintenance = useAppStore((s) => s.completeMaintenance)
+  const addActivity = useAppStore((s) => s.addActivity)
+  const [saved, setSaved] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  // Die passende Wartungsposition – nur, wenn es sie an diesem Fahrzeug gibt
+  const dueItem = useMemo(
+    () => (guide?.maintenanceKind ? maintenance.find((m) => m.kind === guide.maintenanceKind) : undefined),
+    [maintenance, guide?.maintenanceKind],
+  )
 
   // Die vergleichbare Werkstattposition ist schon auf Marke und Fahrzeugart
   // umgerechnet – der Screen rechnet nur noch den Stundensatz dagegen
@@ -95,6 +123,30 @@ export default function GuideDetailScreen() {
   // Für Ungeübte dauert es länger – wenn die KI eine realistische Zeit genannt
   // hat, zählt die, sonst die Angabe der Anleitung
   const cost = guideCostComparison(job, hourlyRate, adapt?.timeNoviceMin ?? guide.durationMin)
+
+  const allDone = done.size === guide.steps.length
+
+  /**
+   * Angeboten, nicht automatisch: Gespeichert wird erst, wenn der Nutzer es
+   * bestätigt – und er sieht vorher, was in seinen Daten landet.
+   */
+  const saveWork = () => {
+    if (!vehicle) return
+    if (dueItem) {
+      // Schreibt den Wartungsplan fort *und* legt den Verlaufseintrag an
+      completeMaintenance(dueItem.id, 'selbst erledigt nach Anleitung')
+    } else {
+      addActivity({
+        vehicleId: vehicle.id,
+        date: todayIso(),
+        title: `${guide.title} erledigt`,
+        detail: `selbst erledigt nach Anleitung · bei ${formatKm(vehicle.mileage)}`,
+        icon: 'repair',
+        mileage: vehicle.mileage,
+      })
+    }
+    setSaved(true)
+  }
 
   return (
     <Page>
@@ -290,6 +342,67 @@ export default function GuideDetailScreen() {
             })}
           </div>
         </section>
+
+        {/* Nach dem letzten Schritt: die Arbeit dahin bringen, wo sie hingehört –
+            aber erst auf Bestätigung. Der Nutzer sieht vorher, was gespeichert wird */}
+        {allDone && vehicle && (saved ? (
+          <Card className="border-ok/30 bg-ok/6">
+            <div className="mb-1.5 flex items-center gap-2 text-ok">
+              <CheckCircle2 size={16} />
+              <span className="text-[13.5px] font-semibold">Eingetragen</span>
+            </div>
+            <p className="text-[13px] leading-relaxed text-ink-muted">
+              {dueItem
+                ? `„${dueItem.label}" steht jetzt auf erledigt bei ${formatKm(vehicle.mileage)} – und im Verlauf.`
+                : 'Die Arbeit steht jetzt in Deinem Verlauf.'}
+            </p>
+            <Link
+              to={dueItem ? '/maintenance' : '/more'}
+              className="mt-2 inline-block text-[13px] font-medium text-brand-blue"
+            >
+              {dueItem ? 'Zum Wartungsplan' : 'Zum Verlauf'}
+            </Link>
+          </Card>
+        ) : (
+          !dismissed && (
+            <Card className="border-ok/30">
+              <div className="mb-1.5 flex items-center gap-2 text-ok">
+                <CheckCircle2 size={16} />
+                <span className="text-[13.5px] font-semibold">Geschafft – soll ich das eintragen?</span>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {dueItem && (
+                  <li className="flex gap-2 text-[13px] text-ink-muted">
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-ok" />
+                    Wartungsplan: „{dueItem.label}" auf erledigt bei {formatKm(vehicle.mileage)}
+                  </li>
+                )}
+                <li className="flex gap-2 text-[13px] text-ink-muted">
+                  <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-ok" />
+                  Verlauf: ein Eintrag von heute
+                </li>
+              </ul>
+              <div className="mt-3.5 flex gap-2">
+                <Button className="flex-1" onClick={saveWork}>
+                  Eintragen
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="shrink-0 whitespace-nowrap"
+                  onClick={() => setDismissed(true)}
+                >
+                  Nicht jetzt
+                </Button>
+              </div>
+              {!dueItem && guide.maintenanceKind && (
+                <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+                  Im Wartungsplan Deines Fahrzeugs gibt es dafür keine Position – deshalb nur der
+                  Verlaufseintrag.
+                </p>
+              )}
+            </Card>
+          )
+        ))}
       </div>
     </Page>
   )

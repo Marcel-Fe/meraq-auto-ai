@@ -15,6 +15,7 @@ import { vehicleTraits, type VehicleTraits } from '../lib/vehicleProfile'
 export const GUIDES: Guide[] = [
   {
     id: 'oil-change',
+    maintenanceKind: 'oil',
     jobId: 'oil-service',
     title: 'Ölwechsel',
     category: 'Motor',
@@ -34,6 +35,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'air-filter',
+    maintenanceKind: 'air-filter',
     jobId: 'air-filter',
     title: 'Luftfilter wechseln',
     category: 'Motor',
@@ -70,6 +72,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'battery',
+    maintenanceKind: 'battery',
     jobId: 'battery',
     title: 'Batterie wechseln',
     category: 'Elektrik',
@@ -88,6 +91,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'spark-plugs',
+    maintenanceKind: 'spark-plugs',
     jobId: 'spark-plugs',
     title: 'Zündkerzen wechseln',
     category: 'Motor',
@@ -105,6 +109,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'cabin-filter',
+    maintenanceKind: 'cabin-filter',
     jobId: 'cabin-filter',
     title: 'Innenraumfilter wechseln',
     category: 'Innenraum',
@@ -136,6 +141,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'tire-change',
+    maintenanceKind: 'tires',
     jobId: 'wheel-swap',
     title: 'Räder wechseln',
     category: 'Fahrwerk',
@@ -154,6 +160,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'coolant',
+    maintenanceKind: 'coolant',
     title: 'Kühlmittel prüfen und nachfüllen',
     category: 'Motor',
     durationMin: 15,
@@ -170,6 +177,7 @@ export const GUIDES: Guide[] = [
   },
   {
     id: 'chain',
+    maintenanceKind: 'chain',
     title: 'Antriebskette spannen und pflegen',
     category: 'Antrieb',
     durationMin: 20,

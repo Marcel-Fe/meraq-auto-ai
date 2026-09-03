@@ -167,6 +167,24 @@ Erledigt ✅
     `npm run check:partimages` fragt Commons wirklich und zeigt, dass jedes der
     19 Bauteile ein passendes Foto findet.
 
+16. **Anleitungen als Reparatur-Assistent** ✅ — die elf Abläufe sahen für jedes Auto gleich aus
+    und vergaßen beim Neuladen sogar den Fortschritt. Jetzt begleiten sie einen echten
+    Nachmittag in der Garage: Die abgehakten Schritte liegen je Fahrzeug und Anleitung im
+    Store (`guideProgress`, Store-Version 9), „Schritt 3 von 6" steht sichtbar darüber.
+    Was bei genau diesem Fahrzeug anders ist, kommt strukturiert von der KI
+    (`SYSTEM_GUIDE_ADAPT`, `guideAdapt.ts`) — jeder Hinweis steht an dem Schritt, zu dem er
+    gehört, statt in einem Absatz darüber. „Selbst machen oder machen lassen" ist eine
+    offengelegte Rechnung gegen die passende Werkstattposition (`jobId` je Anleitung,
+    `guideCost.ts`): Verglichen wird nur, was sich unterscheidet — das Material zahlt man in
+    beiden Fällen, gespart wird die Arbeitszeit. Die eigene Zeit bleibt eine Zeitangabe und
+    wird nicht in Euro umgerechnet. Bei sicherheitsrelevanten Arbeiten steht über der
+    Ersparnis, dass Geld hier nicht das Argument ist. Von acht der elf Anleitungen führt ein
+    Weg nach `/manual?teil=<id>`; und ist der letzte Schritt erledigt, **bietet** die App an,
+    die Arbeit in Wartungsplan und Verlauf einzutragen — mit sichtbarer Liste dessen, was
+    gespeichert wird, und erst auf Bestätigung. Belegt mit `npm run test:guide` (Rechnung,
+    Zuordnung, Bereinigung der KI-Antwort) und im Smoke-Test (Fortschritt übersteht das
+    Neuladen, der Eintrag landet wirklich im Verlauf).
+
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff

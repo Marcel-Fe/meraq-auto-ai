@@ -98,6 +98,43 @@ await page.waitForTimeout(600)
 const persisted = await page.evaluate(() => document.body.innerText.includes('75.000'))
 if (!persisted) problems.push('[persistenz] Geänderter Kilometerstand nach Reload nicht gefunden')
 
+// Der Fortschritt in einer Anleitung muss einen Neustart überleben – wer unter
+// dem Auto liegt und die App wegwischt, darf nicht bei Schritt 1 landen
+await page.evaluate(() => (window.location.hash = '#/guides/oil-change'))
+await page.waitForTimeout(700)
+// Über den Text ansprechen, nicht über die Position: Sobald der erste Schritt
+// abgehakt ist, schiebt sich der Zurücksetzen-Knopf davor
+await page.getByRole('button', { name: /Vorbereiten/ }).click()
+await page.waitForTimeout(200)
+await page.getByRole('button', { name: /Öl ablassen/ }).click()
+await page.waitForTimeout(300)
+await page.reload({ waitUntil: 'networkidle' })
+await page.waitForTimeout(800)
+const fortschritt = await page.evaluate(() => document.body.innerText)
+if (!fortschritt.includes('Schritt 3 von 6')) {
+  problems.push(`[anleitung] Fortschritt nach Reload verloren: ${fortschritt.match(/Schritt \d+ von \d+/)?.[0] ?? 'keine Angabe'}`)
+}
+
+// Ist die Arbeit fertig, bietet die App den Eintrag an – gespeichert wird erst
+// auf Bestätigung, und dann muss es wirklich im Verlauf stehen
+for (const titel of ['Ölfilter tauschen', 'Verschließen', 'Neu befüllen', 'Kontrollieren']) {
+  await page.getByRole('button', { name: new RegExp(titel) }).click()
+  await page.waitForTimeout(150)
+}
+await page.waitForTimeout(300)
+const angebot = await page.evaluate(() => document.body.innerText)
+if (!angebot.includes('soll ich das eintragen')) {
+  problems.push('[anleitung] Nach dem letzten Schritt kommt kein Angebot zum Eintragen')
+}
+await page.getByRole('button', { name: 'Eintragen', exact: true }).click()
+await page.waitForTimeout(500)
+await page.evaluate(() => (window.location.hash = '#/more'))
+await page.waitForTimeout(700)
+const verlauf = await page.evaluate(() => document.body.innerText)
+if (!/Ölwechsel erledigt/.test(verlauf)) {
+  problems.push('[anleitung] Die erledigte Arbeit steht nicht im Verlauf')
+}
+
 // KI ohne Schlüssel darf nicht abstürzen, sondern muss einen Hinweis samt Weg
 // zur Einrichtung zeigen. Geprüft wird das Verhalten, nicht der Wortlaut.
 await page.evaluate(() => (window.location.hash = '#/assistant'))
