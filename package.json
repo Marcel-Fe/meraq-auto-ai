@@ -19,6 +19,8 @@
     "test:image": "node --experimental-strip-types scripts/test-vehicle-image.mjs",
     "test:part": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-part-cost.mjs",
     "test:guide": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-guide-cost.mjs",
+    "test:invoice": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-invoice.mjs",
+    "test:invoicescan": "node scripts/test-invoice-scan.mjs",
     "test:partimage": "node --experimental-strip-types scripts/test-part-image.mjs",
     "test:partsearch": "node scripts/test-part-search.mjs",
     "test:3d": "node scripts/shot-3d.mjs",

@@ -381,6 +381,52 @@ export interface PartExplanation {
 }
 
 /**
+ * Eine einzelne Position einer Werkstattrechnung, übersetzt für Laien.
+ *
+ * `partHint` ist bewusst ein Begriff und keine Bauteil-Id: Welche Stelle im
+ * Modell gemeint ist, entscheidet die App über `findHotspotId()` – die
+ * Zuordnung liegt in den Daten, nicht in der Antwort der KI.
+ */
+export interface InvoicePosition {
+  /** Wortlaut wie auf der Rechnung */
+  label: string
+  /** Dasselbe in Alltagssprache */
+  plain: string
+  /** Warum diese Arbeit gemacht wird */
+  why?: string
+  /** Übliches deutsches Wort für das betroffene Bauteil */
+  partHint?: string
+  /** Vergleichbare Werkstattposition aus `repairJobsFor()` */
+  jobId?: string
+  /** Betrag dieser Position in Euro, falls lesbar */
+  priceEur?: number
+  kind: 'Wartung' | 'Verschleiß' | 'Reparatur' | 'Material' | 'Arbeitslohn' | 'Sonstiges'
+  /** Wie zwingend die Arbeit war */
+  necessity?: 'nötig' | 'vorbeugend' | 'Komfort' | 'unklar'
+}
+
+/** Eine ausgelesene und erklärte Werkstattrechnung */
+export interface InvoiceExplanation {
+  /** War auf dem Bild überhaupt ein Beleg zu erkennen? */
+  readable: boolean
+  workshop?: string
+  /** Rechnungsdatum, ISO-Tag */
+  date?: string
+  totalGrossEur?: number
+  mileage?: number
+  /** Was insgesamt gemacht wurde, in Alltagssprache */
+  summary: string
+  positions: InvoicePosition[]
+  /** Was der Nutzer die Werkstatt fragen kann */
+  questions?: string[]
+  /** Was daraus für die nächste Zeit folgt */
+  followUp?: string[]
+  /** Wartungsarten, die dieser Beleg erledigt hat */
+  maintenanceKinds?: MaintenanceKind[]
+  note?: string
+}
+
+/**
  * Frei lizenziertes Foto eines Bauteils aus Wikimedia Commons.
  * Urheber und Lizenz gehören zur Nutzungsbedingung und werden im UI angezeigt.
  */

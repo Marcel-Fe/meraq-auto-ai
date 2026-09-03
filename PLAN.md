@@ -37,7 +37,7 @@ Fahrzeugunabhängigkeit ✅
 Infrastruktur ✅
 - PWA installierbar (Manifest, Service Worker, Icons aus dem Markenlogo)
 - Automatischer Deploy nach GitHub Pages bei jedem Push auf `main`
-- Smoke-Test über alle 23 Screens im iPhone-Format (`npm run test:smoke`), die ganze Reihe
+- Smoke-Test über alle 24 Screens im iPhone-Format (`npm run test:smoke`), die ganze Reihe
   in einem Lauf über `npm run verify`
 - **Erststart 107 kB gzip.** Das ist die ehrliche Zahl: die `index`-Datei plus alles, was der
   Browser über `modulepreload` mitlädt (`npm run analyze` rechnet es zusammen). Die früher
@@ -184,6 +184,20 @@ Erledigt ✅
     gespeichert wird, und erst auf Bestätigung. Belegt mit `npm run test:guide` (Rechnung,
     Zuordnung, Bereinigung der KI-Antwort) und im Smoke-Test (Fortschritt übersteht das
     Neuladen, der Eintrag landet wirklich im Verlauf).
+
+17. **Werkstattrechnung erklären** ✅ — der Beleg ist der Moment, in dem am meisten Geld
+    fließt und am wenigsten verstanden wird. `/invoice` scannt ihn (Kamera oder Datei) und
+    übersetzt ihn Zeile für Zeile: was gemacht wurde, warum man das macht, welches Bauteil
+    gemeint ist — mit Foto aus Commons und Sprung nach `/manual?teil=<id>`. Dazu Fragen, die
+    der Nutzer der Werkstatt stellen kann, und was daraus für die nächsten Monate folgt.
+    **Den Preis bewertet nicht die KI**, sondern `invoiceCheck.ts`: übliche Spanne aus der
+    Werkstattposition für genau dieses Fahrzeug plus dem eingestellten Stundensatz, mit
+    offengelegter Rechnung. Die Spanne ist absichtlich großzügig, und auch „deutlich darüber"
+    bleibt eine Frage an die Werkstatt, kein Urteil. Die KI darf keine Bauteil-Id und keine
+    erfundene Werkstattposition liefern — beides prüft die App gegen ihre eigenen Daten.
+    Übernommen in Verlauf und Wartungsplan wird erst auf Bestätigung, mit Datum und
+    Kilometerstand **des Belegs**. Belegt mit `npm run test:invoice` (Rechnung, Bereinigung,
+    Zuordnung) und `npm run test:invoicescan` (der ganze Weg mit abgefangener KI-Antwort).
 
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat

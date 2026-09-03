@@ -1,4 +1,4 @@
-import type { ManualZone, Vehicle } from '../types'
+import type { ManualHotspot, ManualZone, Vehicle } from '../types'
 import { vehicleTraits } from '../lib/vehicleProfile'
 
 /**
@@ -397,6 +397,15 @@ export function findHotspotId(text: string, vehicle: Vehicle): string | undefine
     }
   }
   return best?.id
+}
+
+/** Das Bauteil selbst – für Foto und Kurzbeschreibung außerhalb des Handbuchs */
+export function hotspotById(hotspotId: string, vehicle: Vehicle): ManualHotspot | undefined {
+  for (const zone of manualZonesFor(vehicle)) {
+    const found = zone.hotspots.find((h) => h.id === hotspotId)
+    if (found) return found
+  }
+  return undefined
 }
 
 /** In welcher Zone liegt ein Bauteil? Für den Sprung aus Diagnose und Teilesuche. */

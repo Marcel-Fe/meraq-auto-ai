@@ -373,6 +373,23 @@ export default function DocumentsScreen() {
       />
 
       <div className="anim-fade-up space-y-5">
+        {/* Hier landen die Rechnungen – der Weg zum Verstehen gehört daneben */}
+        <Link to="/invoice">
+          <Card className="border-brand-teal/30 transition active:scale-[.99]">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-brand-teal/15 text-brand-teal">
+                <Receipt size={21} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14.5px] font-semibold">Werkstattrechnung erklären</span>
+                <span className="block text-[12.5px] text-ink-muted">
+                  Was wurde gemacht, warum – und welches Teil ist gemeint?
+                </span>
+              </span>
+            </div>
+          </Card>
+        </Link>
+
         {expiring.length > 0 && (
           <Card className="border-warn/30">
             <div className="flex items-start gap-3">

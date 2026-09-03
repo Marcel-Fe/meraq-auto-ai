@@ -19,6 +19,7 @@ const PURE = [
   ['Kalender-Datei', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-ics.mjs']],
   ['Kostenrahmen', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-part-cost.mjs']],
   ['Anleitungs-Vergleich', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-guide-cost.mjs']],
+  ['Rechnungspruefung', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-invoice.mjs']],
   ['Fahrzeugbild', ['--experimental-strip-types', 'scripts/test-vehicle-image.mjs']],
   ['Bauteilfoto', ['--experimental-strip-types', 'scripts/test-part-image.mjs']],
 ]
@@ -30,6 +31,7 @@ const UI = [
   ['KI-Anbieter', 'scripts/test-ai-providers.mjs'],
   ['Werkstattsuche', 'scripts/test-workshops.mjs'],
   ['Bauteil-Suche', 'scripts/test-part-search.mjs'],
+  ['Rechnung erklaeren', 'scripts/test-invoice-scan.mjs'],
 ]
 
 const failed = []

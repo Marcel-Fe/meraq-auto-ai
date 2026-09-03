@@ -20,6 +20,7 @@ const Value = lazy(() => import('../features/value/ValueScreen'))
 const Parts = lazy(() => import('../features/parts/PartsScreen'))
 const RepairCosts = lazy(() => import('../features/repair/RepairCostScreen'))
 const Documents = lazy(() => import('../features/documents/DocumentsScreen'))
+const Invoice = lazy(() => import('../features/invoice/InvoiceScreen'))
 const Workshops = lazy(() => import('../features/workshops/WorkshopsScreen'))
 const More = lazy(() => import('../features/more/MoreScreen'))
 const Settings = lazy(() => import('../features/settings/SettingsScreen'))
@@ -84,6 +85,7 @@ export function App() {
                     <Route path="/parts" element={<Parts />} />
                     <Route path="/repair-costs" element={<RepairCosts />} />
                     <Route path="/documents" element={<Documents />} />
+                    <Route path="/invoice" element={<Invoice />} />
                     <Route path="/reminders" element={<Reminders />} />
                     <Route path="/compare" element={<Compare />} />
                     <Route path="/workshops" element={<Workshops />} />

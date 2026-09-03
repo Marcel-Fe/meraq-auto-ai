@@ -112,13 +112,15 @@ npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzw
 npm run test:ics        # Kalender-Datei gegen RFC 5545
 npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
 npm run test:guide      # selbst machen oder machen lassen, reine Logik
+npm run test:invoice    # Preis-Einordnung der Rechnung und Bereinigung, reine Logik
 npm run test:image      # Auswahl des Fahrzeugbildes, reine Logik ohne Netz
 npm run test:partimage  # Auswahl des Bauteilfotos samt Lizenzprüfung, reine Logik
-npm run test:smoke      # 23 Screens im iPhone-Format, Screenshots in screenshots/
+npm run test:smoke      # 24 Screens im iPhone-Format, Screenshots in screenshots/
 npm run test:vehicles   # E-Auto, Motorrad und Diesel-Transporter über die UI anlegen und prüfen
 npm run test:ai         # beide KI-Anbieter mit abgefangenen Antworten, verbraucht kein Guthaben
 npm run test:workshops  # Werkstattsuche mit abgefangenen Karten-Antworten
 npm run test:partsearch # Bauteil-Suche samt KI-Erklärung und Sprung ins Modell
+npm run test:invoicescan # Rechnung scannen, erklären und übernehmen, KI abgefangen
 npm run test:3d         # Screenshots der 3D-Ansicht – Formfehler bestehen jeden Zahlentest
 npm run analyze         # was im Erststart-Bundle steckt, Modul für Modul
 ```

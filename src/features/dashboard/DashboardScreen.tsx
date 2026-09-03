@@ -7,6 +7,7 @@ import {
   Box,
   Calculator,
   Car,
+  ChevronRight,
   Crosshair,
   Droplet,
   FileSpreadsheet,
@@ -144,6 +145,24 @@ export default function DashboardScreen() {
             </span>
           </Link>
         )}
+
+        {/* Der Beleg ist der Moment mit dem größten Erklärungsbedarf – deshalb
+            als eigener Weg und nicht als eine Kachel unter zwölf */}
+        <Link
+          to="/invoice"
+          className="glass flex items-center gap-3 rounded-[18px] border-brand-teal/30 p-3.5 active:scale-[.99]"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-teal/15 text-brand-teal">
+            <Receipt size={19} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold">Werkstattrechnung erklären</span>
+            <span className="block text-[12px] text-ink-muted">
+              Beleg scannen – die KI übersetzt jede Zeile
+            </span>
+          </span>
+          <ChevronRight size={17} className="shrink-0 text-ink-faint" />
+        </Link>
 
         <div className="grid grid-cols-4 gap-2.5">
           {QUICK_ACTIONS.map((a) => (
