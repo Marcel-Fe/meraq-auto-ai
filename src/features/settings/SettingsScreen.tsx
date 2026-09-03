@@ -162,6 +162,9 @@ export default function SettingsScreen() {
                   : 'Beginnt mit sk-ant-. Erstellbar unter console.anthropic.com'
               }
             >
+            {/* Google gibt inzwischen zwei Formen aus: die alten AIza-Schlüssel und
+                die neuen, die mit AQ. beginnen. Geprüft wird nichts am Format – nur,
+                ob der Schlüssel bei Google wirklich funktioniert. */}
               <div className="relative">
                 <Input
                   type={show ? 'text' : 'password'}
@@ -170,7 +173,7 @@ export default function SettingsScreen() {
                     setKey(e.target.value)
                     setResult(null)
                   }}
-                  placeholder={google ? 'AIza...' : 'sk-ant-...'}
+                  placeholder={google ? 'AIza... oder AQ...' : 'sk-ant-...'}
                   autoComplete="off"
                   spellCheck={false}
                   className="pr-11 font-mono text-[13px]"
