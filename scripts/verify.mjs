@@ -18,6 +18,7 @@ const PURE = [
   ['Rechenkerne', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-calc.mjs']],
   ['Kalender-Datei', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-ics.mjs']],
   ['Verkaufswert', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-value.mjs']],
+  ['Spracheingabe', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-voice.mjs']],
   ['Kostenrahmen', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-part-cost.mjs']],
   ['Anleitungs-Vergleich', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-guide-cost.mjs']],
   ['Rechnungspruefung', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-invoice.mjs']],
@@ -33,6 +34,7 @@ const UI = [
   ['Werkstattsuche', 'scripts/test-workshops.mjs'],
   ['Bauteil-Suche', 'scripts/test-part-search.mjs'],
   ['Rechnung erklaeren', 'scripts/test-invoice-scan.mjs'],
+  ['Spracheingabe (Oberflaeche)', 'scripts/test-voice-input.mjs'],
 ]
 
 const failed = []

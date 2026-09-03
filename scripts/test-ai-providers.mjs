@@ -213,7 +213,7 @@ if (options.some((o) => /Embedding/i.test(o))) problems.push('[modelle] Embeddin
 
 // --- Assistent: echte Frage über den Google-Weg ---
 await goto('#/assistant')
-await page.getByPlaceholder('Frage stellen…').fill('Was macht ein Bremsbelag?')
+await page.getByPlaceholder('Frage stellen oder sprechen…').fill('Was macht ein Bremsbelag?')
 await page.locator('form button[type="submit"], button[aria-label="Senden"]').first().click()
 await page.waitForTimeout(1500)
 await page.screenshot({ path: `${OUT}/assistent-google.png`, fullPage: false })
@@ -249,7 +249,7 @@ await page.setInputFiles('input[type="file"]', {
   buffer: PNG,
 })
 await page.waitForTimeout(600)
-await page.getByPlaceholder('Frage stellen…').fill('Was ist das für ein Teil?')
+await page.getByPlaceholder('Frage stellen oder sprechen…').fill('Was ist das für ein Teil?')
 await page.locator('form button[type="submit"], button[aria-label="Senden"]').first().click()
 await page.waitForTimeout(1500)
 
@@ -322,7 +322,7 @@ if (!(await text()).includes('Schlüssel funktioniert')) {
 }
 
 await goto('#/assistant')
-await page.getByPlaceholder('Frage stellen…').fill('Was ist mit der Steuerkette?')
+await page.getByPlaceholder('Frage stellen oder sprechen…').fill('Was ist mit der Steuerkette?')
 await page.locator('form button[type="submit"], button[aria-label="Senden"]').first().click()
 await page.waitForTimeout(2000)
 

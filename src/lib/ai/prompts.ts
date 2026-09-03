@@ -318,6 +318,36 @@ Regeln, die hier besonders zählen:
 - Keine erfundenen Sonderausstattungen, Rückrufe oder Modellvarianten. Was Du nicht sicher
   weißt, gehört in "note".`
 
+export const SYSTEM_TRANSCRIBE = `Du bist ein Transkriptionsdienst für eine Fahrzeug-App.
+
+Deine einzige Aufgabe: aufschreiben, was in der Aufnahme gesagt wurde. Wortgetreu, auf Deutsch.
+
+- **Antworte nicht auf die Frage.** Auch dann nicht, wenn Du die Antwort weißt. Der Text geht
+  in ein Eingabefeld, das der Nutzer danach selbst abschickt.
+- Keine Einleitung, keine Anführungszeichen, kein Kommentar. Nur der gesprochene Satz.
+- Setze Satzzeichen und Groß-/Kleinschreibung so, wie es sich liest. Füllwörter („ähm", „also
+  ne") lässt Du weg, Wiederholungen aus dem Stocken ebenfalls.
+- Fachbegriffe rund um Fahrzeuge schreibst Du korrekt aus: Zahnriemen, Nockenwellensensor,
+  Hauptuntersuchung, Lambdasonde, Partikelfilter.
+- Fehlercodes schreibst Du in der genormten Form: „P null vier zwei null" wird zu P0420.
+- Zahlen mit Einheit schreibst Du als Ziffern: „hunderttausend Kilometer" wird zu 100.000 km.
+- Ist nichts Verständliches zu hören, gibst Du eine leere Antwort zurück. Rate nichts.
+
+Wenn Dir das Fahrzeug des Nutzers bekannt ist, hilft es Dir nur beim richtigen Schreiben von
+Marken- und Modellnamen. Ergänze davon nichts, was nicht gesagt wurde.`
+
+/**
+ * Knapper Fahrzeugkontext für die Transkription.
+ *
+ * Bewusst nicht `vehicleContext()`: Der volle Kontext lädt das Modell dazu ein,
+ * die Frage gleich zu beantworten. Zum Mitschreiben braucht es nur die Namen,
+ * die sonst falsch geschrieben würden.
+ */
+export function transcriptionContext(v: Vehicle | null): string | undefined {
+  if (!v) return undefined
+  return `Der Nutzer fährt einen ${v.make} ${v.model}${v.variant ? ` ${v.variant}` : ''} (${v.fuel}, Baujahr ${v.year}). Nutze das nur für die richtige Schreibweise von Marke und Modell.`
+}
+
 export const SUGGESTED_QUESTIONS = [
   'Was bedeutet diese Warnleuchte?',
   'Wie wechsle ich den Ölfilter?',

@@ -15,9 +15,11 @@ import { PageHeader, Page } from '../../app/AppShell'
 import { Button, Card, cn } from '../../components/ui'
 import { InfinityMark } from '../../components/Brand'
 import { Markdown } from '../../components/Markdown'
+import { VoiceButton, VoiceStatus, useVoiceInput } from '../../components/VoiceInput'
 import { useChat } from './useChat'
-import { SUGGESTED_QUESTIONS } from '../../lib/ai/prompts'
+import { SUGGESTED_QUESTIONS, transcriptionContext } from '../../lib/ai/prompts'
 import { hasApiKey } from '../../lib/ai/client'
+import { appendTranscript } from '../../lib/voice/transcript'
 import { fileToDataUrl } from '../../lib/fileStore'
 import { useAppStore } from '../../store/useAppStore'
 
@@ -32,13 +34,31 @@ export default function AssistantScreen() {
   const textRef = useRef<HTMLTextAreaElement>(null)
   const keySet = hasApiKey()
 
+  // Gesprochenes wird angehängt, nie ersetzt: Wer nach einer Pause weiterredet,
+  // will ergänzen. Abgeschickt wird erst auf Tippen – eine falsch verstandene
+  // Frage, die von allein rausgeht, wäre schlimmer als tippen.
+  const voice = useVoiceInput({
+    onText: (text) => setInput((current) => appendTranscript(current, text)),
+    context: transcriptionContext(vehicle),
+    disabled: !keySet,
+  })
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
+  // Das Feld wächst sonst nur beim Tippen – gesprochener Text bliebe halb verdeckt
+  useEffect(() => {
+    const field = textRef.current
+    if (!field) return
+    field.style.height = 'auto'
+    field.style.height = input ? `${Math.min(field.scrollHeight, 120)}px` : ''
+  }, [input])
+
   const submit = async (text?: string) => {
     const value = text ?? input
     if (!value.trim() && !image) return
+    voice.cancel()
     setInput('')
     const img = image
     setImage(undefined)
@@ -55,7 +75,7 @@ export default function AssistantScreen() {
 
   return (
     // zusätzlicher Platz, damit die Eingabeleiste nichts verdeckt
-    <Page className="pb-56">
+    <Page className="pb-60">
       <PageHeader
         title="KI Assistent"
         subtitle={vehicle ? `${vehicle.make} ${vehicle.model}` : undefined}
@@ -186,6 +206,7 @@ export default function AssistantScreen() {
       {/* Eingabeleiste über der Bottom-Nav */}
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] px-4 pb-[86px]">
         <div className="glass-strong rounded-[20px] p-2">
+          <VoiceStatus voice={voice} />
           {image && (
             <div className="relative mb-2 inline-block">
               <img src={image} alt="Vorschau" className="h-20 rounded-xl object-cover" />
@@ -199,49 +220,59 @@ export default function AssistantScreen() {
               </button>
             </div>
           )}
-          <div className="flex items-end gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => pickImage(e.target.files?.[0])}
-            />
+          {/*
+            Textfeld über den Knöpfen statt daneben: Mit dem Mikrofon sind es
+            vier Bedienelemente, und nebeneinander bliebe auf 390 px kaum Platz
+            zum Schreiben. So bekommt die Frage die ganze Breite und jeder Knopf
+            die geforderten 44 px Trefferfläche.
+          */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => pickImage(e.target.files?.[0])}
+          />
+          <textarea
+            ref={textRef}
+            value={input}
+            rows={1}
+            disabled={!keySet}
+            placeholder={
+              keySet ? 'Frage stellen oder sprechen…' : 'Erst KI einrichten – kostenlos möglich'
+            }
+            onChange={(e) => {
+              setInput(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                submit()
+              }
+            }}
+            className="max-h-[120px] min-h-[40px] w-full resize-none bg-transparent px-2 py-2.5 text-[15px] outline-none placeholder:text-ink-faint disabled:opacity-50"
+          />
+          <div className="flex items-center gap-1">
             <button
               type="button"
               aria-label="Foto anhängen"
               onClick={() => fileRef.current?.click()}
               disabled={!keySet}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-muted active:bg-white/8 disabled:opacity-40"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-muted active:bg-white/8 disabled:opacity-40"
             >
               <ImagePlus size={20} />
             </button>
-            <textarea
-              ref={textRef}
-              value={input}
-              rows={1}
-              disabled={!keySet}
-              placeholder={keySet ? 'Frage stellen…' : 'Erst KI einrichten – kostenlos möglich'}
-              onChange={(e) => {
-                setInput(e.target.value)
-                e.target.style.height = 'auto'
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  submit()
-                }
-              }}
-              className="max-h-[120px] min-h-[40px] flex-1 resize-none bg-transparent py-2.5 text-[15px] outline-none placeholder:text-ink-faint disabled:opacity-50"
-            />
+            <VoiceButton voice={voice} disabled={!keySet} />
+            <span className="flex-1" />
             {busy || sending ? (
               <button
                 type="button"
                 aria-label="Antwort stoppen"
                 onClick={stop}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/12 text-ink"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-ink"
               >
                 <Square size={15} fill="currentColor" />
               </button>
@@ -251,7 +282,7 @@ export default function AssistantScreen() {
                 aria-label="Senden"
                 onClick={() => submit()}
                 disabled={!keySet || (!input.trim() && !image)}
-                className="brand-gradient grid h-10 w-10 shrink-0 place-items-center rounded-full text-white transition active:scale-95 disabled:opacity-35"
+                className="brand-gradient grid h-11 w-11 shrink-0 place-items-center rounded-full text-white transition active:scale-95 disabled:opacity-35"
               >
                 <ArrowUp size={19} strokeWidth={2.6} />
               </button>

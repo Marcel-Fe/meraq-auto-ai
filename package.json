@@ -27,6 +27,8 @@
     "test:calc": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-calc.mjs",
     "test:ics": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-ics.mjs",
     "test:value": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-value.mjs",
+    "test:voice": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-voice.mjs",
+    "test:voiceinput": "node scripts/test-voice-input.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

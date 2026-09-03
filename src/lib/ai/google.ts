@@ -210,6 +210,54 @@ export async function askGoogleStructured<T>(
   return call.args as T
 }
 
+/**
+ * Aufnahme in Text.
+ *
+ * Eigener Weg statt über `toContents()`: Das Hausformat ist das von Anthropic,
+ * und dort gibt es keinen Audio-Block – Claude kann keine Audiodaten lesen.
+ * Audio ist damit eine Fähigkeit nur dieses Anbieters, und sie gehört hierher.
+ *
+ * `temperature: 0`, weil Mitschreiben keine Kreativität braucht.
+ */
+export async function transcribeGoogle(opts: {
+  apiKey: string
+  model: string
+  system: string
+  audio: { mimeType: string; data: string }
+  instruction: string
+  signal?: AbortSignal
+}): Promise<string> {
+  const res = await fetch(
+    `${BASE}/models/${encodeURIComponent(opts.model)}:generateContent?key=${encodeURIComponent(opts.apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: opts.system }] },
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: opts.audio.mimeType, data: opts.audio.data } },
+              { text: opts.instruction },
+            ],
+          },
+        ],
+        generationConfig: { temperature: 0, maxOutputTokens: 2048 },
+      }),
+      signal: opts.signal,
+    },
+  )
+  if (!res.ok) await fail(res)
+
+  const data = await res.json()
+  const parts: GooglePart[] = data?.candidates?.[0]?.content?.parts ?? []
+  return parts
+    .map((p) => p.text ?? '')
+    .join('')
+    .trim()
+}
+
 export interface GoogleModel {
   /** Name ohne das Präfix "models/" */
   id: string

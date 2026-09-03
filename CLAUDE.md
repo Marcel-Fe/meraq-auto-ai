@@ -111,6 +111,7 @@ brauchen die UI-Tests einen laufenden `npm run preview`:
 npm run test:calc       # Kfz-Steuer, Marktwert und Gesamtkosten gegen Referenzwerte
 npm run test:ics        # Kalender-Datei gegen RFC 5545
 npm run test:value      # Preisuntergrenze, Zu-/Abschläge und Verkaufs-Check, reine Logik
+npm run test:voice      # Aufnahme → WAV und Bereinigung des erkannten Textes, reine Logik
 npm run test:part       # Kostenrahmen und Bauteil-Zuordnung der Suche, reine Logik
 npm run test:guide      # selbst machen oder machen lassen, reine Logik
 npm run test:invoice    # Preis-Einordnung der Rechnung und Bereinigung, reine Logik
@@ -122,6 +123,7 @@ npm run test:ai         # beide KI-Anbieter mit abgefangenen Antworten, verbrauc
 npm run test:workshops  # Werkstattsuche mit abgefangenen Karten-Antworten
 npm run test:partsearch # Bauteil-Suche samt KI-Erklärung und Sprung ins Modell
 npm run test:invoicescan # Rechnung scannen, erklären und übernehmen, KI abgefangen
+npm run test:voiceinput # Frage sprechen: Diktat und Aufnahme, Mikrofon und KI abgefangen
 npm run test:3d         # Screenshots der 3D-Ansicht – Formfehler bestehen jeden Zahlentest
 npm run analyze         # was im Erststart-Bundle steckt, Modul für Modul
 ```

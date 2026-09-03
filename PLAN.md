@@ -218,6 +218,27 @@ Erledigt ✅
     Preis belegt, was ihn drückt und was noch fehlt — alles aus Daten, die schon in der App
     liegen. Belegt mit `npm run test:value` (83 Fälle) und im Fahrzeugtest.
 
+19. **Frage sprechen statt tippen** ✅ — im Assistenten gibt es ein Mikrofon. Dahinter
+    liegen zwei Wege, von denen der Nutzer nichts merkt: **Diktat** über die Spracherkennung
+    des Geräts (`voice/speech.ts`) – kostenlos, ohne Kontingent, der Text erscheint beim
+    Sprechen – und, wo es die nicht gibt (Firefox, manche installierte Web-Apps) oder der
+    Dienst dahinter ausfällt, **Aufnehmen und von der KI mitschreiben lassen**
+    (`voice/recorder.ts`, `SYSTEM_TRANSCRIBE`). Die Aufnahme wird dafür wirklich umgerechnet:
+    Der Browser nimmt in `audio/webm` bzw. `audio/mp4` auf, **beides nimmt Google nicht an** –
+    `voice/wav.ts` dekodiert, mischt auf Mono, rechnet auf 16 kHz herunter und schreibt einen
+    echten WAV-Kopf. Ein Blob mit falsch behauptetem MIME-Typ hätte jeden Test bestanden und
+    in der Wirklichkeit still nichts geliefert. Stille wird vorher erkannt und kostet kein
+    Kontingent. Der Fahrzeugkontext geht knapp mit, damit „Zahnriemen" und „P0420" richtig
+    geschrieben werden; beantworten darf die KI die Frage nicht – sie schreibt sie nur mit.
+    **Abgeschickt wird nie automatisch**: Der Text landet im Eingabefeld, wird gelesen und
+    erst dann gesendet. Claude kann kein Audio lesen; ist Anthropic eingestellt und hat das
+    Gerät keine eigene Erkennung, sagt die App das offen, statt einen toten Knopf anzubieten.
+    Die Eingabeleiste hat dafür zwei Zeilen bekommen – mit vier Bedienelementen nebeneinander
+    blieb auf 390 px kein Platz zum Schreiben, jetzt haben alle Knöpfe 44 px. Belegt mit
+    `npm run test:voice` (60 Fälle, WAV-Kopf Byte für Byte) und `npm run test:voiceinput`
+    (beide Wege über die Oberfläche, mit nachgebildeter Spracherkennung und echtem
+    Fake-Mikrofon).
+
 ## Phase 3 — Ausbau
 - **Echte Marktwerte** über einen Datenanbieter — erst sinnvoll, wenn die App Einnahmen hat
 - **OBD-Anbindung** — braucht eine native Hülle (Capacitor) mit Bluetooth-Zugriff

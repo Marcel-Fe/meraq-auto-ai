@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { useAppStore, type AiProvider } from '../../store/useAppStore'
 import { splitDataUrl } from '../fileStore'
-import { AiHttpError, askGoogle, askGoogleStructured, listGoogleModels } from './google'
+import { AiHttpError, askGoogle, askGoogleStructured, listGoogleModels, transcribeGoogle } from './google'
 
 /**
  * Einziger Zugangspunkt zur KI – für beide Anbieter.
@@ -22,6 +22,20 @@ export class MissingApiKeyError extends Error {
   constructor() {
     super('Kein API-Schlüssel hinterlegt.')
     this.name = 'MissingApiKeyError'
+  }
+}
+
+/**
+ * Der eingestellte Anbieter kann keine Audiodaten lesen.
+ *
+ * Das ist keine Bequemlichkeit, sondern eine Grenze der Schnittstelle: Claude
+ * nimmt Text, Bilder und PDF an – kein Audio. Die App sagt das offen, statt
+ * einen Knopf anzubieten, der nichts tut.
+ */
+export class AudioNotSupportedError extends Error {
+  constructor() {
+    super('Der eingestellte KI-Anbieter kann keine Sprachaufnahmen lesen.')
+    this.name = 'AudioNotSupportedError'
   }
 }
 
@@ -203,6 +217,52 @@ export async function askAiStructured<T>(opts: {
   return block.input as T
 }
 
+/**
+ * Kann die eingestellte KI eine Aufnahme mitschreiben?
+ *
+ * Der Feature-Screen fragt damit nach der **Fähigkeit**, nicht nach dem
+ * Anbieter – welcher es ist, bleibt in dieser Datei.
+ */
+export function audioTranscriptionAvailable(): boolean {
+  const { provider, key } = current()
+  return provider === 'google' && key.length > 0
+}
+
+/**
+ * Aufnahme in Text.
+ *
+ * Der Fahrzeugkontext geht mit, damit Marke, Modell und Fachbegriffe richtig
+ * geschrieben werden – „Zahnriemen" statt „Zahn Riemen", P0420 statt
+ * „P null vier zwanzig". Ergänzen darf das Modell daraus nichts; das steht
+ * ausdrücklich im System-Prompt, den der Aufrufer mitgibt – wie bei `askAi()`
+ * bleibt der Inhalt in `prompts.ts` und nicht in dieser Datei.
+ */
+export async function transcribeAudio(opts: {
+  /** Aufnahme als Data-URL, erzeugt von `wavDataUrl()` */
+  audioDataUrl: string
+  system: string
+  context?: string
+  signal?: AbortSignal
+}): Promise<string> {
+  const { provider, key, model } = current()
+  if (!key) throw new MissingApiKeyError()
+  if (provider !== 'google') throw new AudioNotSupportedError()
+
+  const parsed = splitDataUrl(opts.audioDataUrl)
+  if (!parsed) throw new Error('Die Aufnahme konnte nicht gelesen werden.')
+
+  return withGoogleModelRepair(key, model, (m) =>
+    transcribeGoogle({
+      apiKey: key,
+      model: m,
+      system: opts.context ? `${opts.system}\n\n${opts.context}` : opts.system,
+      audio: { mimeType: parsed.mediaType, data: parsed.data },
+      instruction: 'Schreibe wortgetreu auf, was in dieser Aufnahme gesagt wird. Nur den Wortlaut.',
+      signal: opts.signal,
+    }),
+  )
+}
+
 /** Baut einen Nutzer-Turn, optional mit Bild */
 export function userMessage(text: string, imageDataUrl?: string): Anthropic.MessageParam {
   if (!imageDataUrl) return { role: 'user', content: text }
@@ -234,6 +294,9 @@ export function userMessage(text: string, imageDataUrl?: string): Anthropic.Mess
 export function describeAiError(err: unknown): string {
   if (err instanceof MissingApiKeyError) {
     return 'Es ist noch kein API-Schlüssel hinterlegt. Trage ihn in den Einstellungen ein – bei Google bekommst Du ihn kostenlos.'
+  }
+  if (err instanceof AudioNotSupportedError) {
+    return 'Der eingestellte KI-Anbieter (Anthropic Claude) kann keine Sprachaufnahmen lesen. Stell in den Einstellungen auf Google um – der Schlüssel dafür ist kostenlos.'
   }
   if (err instanceof DOMException && err.name === 'AbortError') return 'Abgebrochen.'
   if (isAbortName(err)) return 'Abgebrochen.'
