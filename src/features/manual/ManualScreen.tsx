@@ -1,17 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import {
-  AlertTriangle,
-  Box,
-  ChevronRight,
-  Crosshair,
-  Info,
-  Layers,
-  Plus,
-  Search,
-  Sparkles,
-  Wrench,
-} from 'lucide-react'
+import { Box, ChevronRight, Crosshair, Info, Layers, Plus, Search, Sparkles } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, EstimateNote, Input, Segmented, Sheet, Skeleton } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
@@ -20,9 +9,8 @@ import type { ManualHotspot, PartExplanation } from '../../types'
 import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
 import { explainPart } from '../../lib/partExplain'
-import { partCostEstimate } from '../../lib/partCost'
-import { formatEur } from '../../lib/format'
 import { useActiveVehicle, useAppStore } from '../../store/useAppStore'
+import { PartExplanationView } from './PartExplanationView'
 import { PartPhoto } from './PartPhoto'
 import { ZoneScene } from './ZoneScene'
 
@@ -54,6 +42,10 @@ export default function ManualScreen() {
   const [aiPart, setAiPart] = useState<PartExplanation | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  // Dasselbe für ein hinterlegtes Bauteil im Sheet
+  const [spotPart, setSpotPart] = useState<PartExplanation | null>(null)
+  const [spotLoading, setSpotLoading] = useState(false)
+  const [spotError, setSpotError] = useState('')
 
   // Erst nach dem ersten Rendern prüfen – auf dem Server gibt es kein document
   useEffect(() => setWebglReady(hasWebgl()), [])
@@ -91,11 +83,17 @@ export default function ManualScreen() {
     setParams({}, { replace: true })
   }, [wantedId, zones, setParams])
 
+  // Beim Wechsel des Bauteils die Erklärung des vorigen wegräumen
+  const spotId = spot?.id
+  useEffect(() => {
+    setSpotPart(null)
+    setSpotError('')
+  }, [spotId])
+
   if (!vehicle || zones.length === 0) return null
 
   const zone = zones.find((z) => z.id === zoneId) ?? zones[0]
   const show3d = use3d && webglReady && zone.hotspots.some((h) => h.pos3d)
-  const cost = aiPart?.exists ? partCostEstimate(aiPart, hourlyRate) : null
 
   /**
    * Der Weg für alles, was nicht fest hinterlegt ist. Die App kennt gut zwei
@@ -114,6 +112,23 @@ export default function ManualScreen() {
       setAiError(describeAiError(err))
     } finally {
       setAiLoading(false)
+    }
+  }
+
+  /**
+   * Ein hinterlegtes Bauteil auf das Fahrzeug des Nutzers herunterbrechen.
+   * Die Daten in `manual.ts` gelten fahrzeugübergreifend – was ein Wechsel bei
+   * *diesem* Auto kostet und ob er selbst machbar ist, weiß nur die KI.
+   */
+  const deepenHotspot = async (hotspot: ManualHotspot) => {
+    setSpotError('')
+    setSpotLoading(true)
+    try {
+      setSpotPart(await explainPart(hotspot.label, vehicle))
+    } catch (err) {
+      setSpotError(describeAiError(err))
+    } finally {
+      setSpotLoading(false)
     }
   }
 
@@ -364,11 +379,48 @@ export default function ManualScreen() {
               </ul>
             </div>
 
+            {/* Erste Stufe: dieselbe strukturierte Erklärung wie bei der freien
+                Suche. Ein hinterlegtes Bauteil darf nicht schlechter erklärt
+                werden als ein selbst eingetipptes. */}
+            {spotPart ? (
+              <div className="border-t border-white/8 pt-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles size={15} className="text-brand-violet" />
+                  <span className="text-[12.5px] font-semibold">
+                    Für Deinen {vehicle.make} {vehicle.model}
+                  </span>
+                </div>
+                <PartExplanationView part={spotPart} hourlyRate={hourlyRate} withFunction={false} />
+              </div>
+            ) : (
+              <Button
+                full
+                variant="outline"
+                loading={spotLoading}
+                icon={<Sparkles size={16} />}
+                onClick={() => deepenHotspot(spot)}
+              >
+                Für mein Fahrzeug: Kosten, Symptome, Aufwand
+              </Button>
+            )}
+
+            {spotError && (
+              <div className="space-y-2">
+                <p className="text-[13.5px] text-ink-muted">{spotError}</p>
+                {!hasApiKey() && (
+                  <Link to="/settings" className="inline-block text-[13px] font-medium text-brand-blue">
+                    Kostenlos einrichten
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Zweite Stufe: freie Nachfrage im Fließtext */}
             {answer ? (
               <Card>
                 <div className="mb-2 flex items-center gap-2">
                   <Sparkles size={15} className="text-brand-violet" />
-                  <span className="text-[12.5px] font-semibold">KI-Erklärung</span>
+                  <span className="text-[12.5px] font-semibold">Nachgefragt</span>
                 </div>
                 <div className="text-[14px] text-ink-muted">
                   <Markdown text={answer} />
@@ -384,15 +436,17 @@ export default function ManualScreen() {
                 )}
               </Card>
             ) : (
-              <Button
-                full
-                variant="outline"
-                loading={loading}
-                icon={<Sparkles size={16} />}
-                onClick={() => explainHotspot(spot)}
-              >
-                KI fragen: Was heißt das für mein Fahrzeug?
-              </Button>
+              spotPart && (
+                <Button
+                  full
+                  variant="ghost"
+                  loading={loading}
+                  icon={<Sparkles size={16} />}
+                  onClick={() => explainHotspot(spot)}
+                >
+                  Nachfragen: Kann ich das selbst machen?
+                </Button>
+              )
             )}
           </div>
         )}
@@ -418,106 +472,7 @@ export default function ManualScreen() {
           </div>
         )}
 
-        {!aiLoading && aiPart && (
-          <div className="space-y-4">
-            {!aiPart.exists ? (
-              <Card className="border-warn/30">
-                <div className="mb-1.5 flex items-center gap-2 text-warn">
-                  <AlertTriangle size={15} />
-                  <span className="text-[13px] font-semibold">Gibt es an Deinem Fahrzeug nicht</span>
-                </div>
-                <p className="text-[13.5px] leading-relaxed text-ink-muted">
-                  {aiPart.note ?? `${aiPart.name} kommt bei diesem Antrieb nicht vor.`}
-                </p>
-              </Card>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2">
-                  <Badge tone={aiPart.effort === 'Werkstatt' ? 'warn' : 'brand'}>
-                    <Wrench size={11} className="mr-1 inline" />
-                    {aiPart.effort}
-                  </Badge>
-                  {aiPart.interval && <Badge tone="brand">Wartung: {aiPart.interval}</Badge>}
-                </div>
-
-                <div>
-                  <p className="mb-1.5 text-[12.5px] font-semibold text-ink-faint">Funktion</p>
-                  <p className="text-[14px] leading-relaxed text-ink-muted">{aiPart.fn}</p>
-                </div>
-
-                {aiPart.location && (
-                  <div>
-                    <p className="mb-1.5 text-[12.5px] font-semibold text-ink-faint">Wo es sitzt</p>
-                    <p className="text-[14px] leading-relaxed text-ink-muted">{aiPart.location}</p>
-                  </div>
-                )}
-
-                {aiPart.symptoms.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[12.5px] font-semibold text-ink-faint">Woran Du einen Defekt merkst</p>
-                    <ul className="space-y-1.5">
-                      {aiPart.symptoms.map((s) => (
-                        <li key={s} className="flex gap-2 text-[13.5px] text-ink-muted">
-                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-warn" />
-                          {s}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {aiPart.checks && aiPart.checks.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[12.5px] font-semibold text-ink-faint">Das kannst Du selbst prüfen</p>
-                    <ul className="space-y-1.5">
-                      {aiPart.checks.map((c) => (
-                        <li key={c} className="flex gap-2 text-[13.5px] text-ink-muted">
-                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-brand-teal" />
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {cost && (
-                  <Card>
-                    <p className="mb-1 text-[12.5px] font-semibold text-ink-faint">Was ein Wechsel etwa kostet</p>
-                    {cost.totalMin !== undefined && cost.totalMax !== undefined ? (
-                      <p className="tnum text-[19px] font-semibold">
-                        {formatEur(cost.totalMin)} – {formatEur(cost.totalMax)}
-                      </p>
-                    ) : (
-                      <p className="text-[13.5px] text-ink-muted">
-                        Nur ein Teil der Rechnung ist bekannt – siehe unten.
-                      </p>
-                    )}
-                    <p className="mt-1 text-[12.5px] text-ink-muted">{cost.formula}</p>
-                    <EstimateNote>
-                      Grobe Schätzung: Ersatzteilspanne aus der KI-Einschätzung für Dein Fahrzeug, dazu
-                      die Arbeitszeit mit Deinem Stundensatz ({formatEur(hourlyRate)}/h, änderbar in den
-                      Einstellungen). Was die Werkstatt wirklich verlangt, sagt Dir nur ihr Angebot.
-                    </EstimateNote>
-                  </Card>
-                )}
-
-                {aiPart.safetyNote && (
-                  <Card className="border-danger/30">
-                    <div className="mb-1.5 flex items-center gap-2 text-danger">
-                      <AlertTriangle size={15} />
-                      <span className="text-[13px] font-semibold">Sicherheit</span>
-                    </div>
-                    <p className="text-[13.5px] leading-relaxed text-ink-muted">{aiPart.safetyNote}</p>
-                  </Card>
-                )}
-
-                {aiPart.note && (
-                  <p className="text-[12.5px] leading-relaxed text-ink-faint">{aiPart.note}</p>
-                )}
-              </>
-            )}
-          </div>
-        )}
+        {!aiLoading && aiPart && <PartExplanationView part={aiPart} hourlyRate={hourlyRate} />}
       </Sheet>
     </Page>
   )

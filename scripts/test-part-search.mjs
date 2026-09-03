@@ -143,6 +143,11 @@ try {
     await page.waitForTimeout(700)
   }
   const text = () => page.evaluate(() => document.body.innerText)
+  // Am Sheet selbst prüfen: der Text eines Bauteils steht auch in der Liste darunter
+  const sheetText = async () => {
+    const sheet = page.locator('.anim-sheet')
+    return (await sheet.count()) ? sheet.first().innerText() : ''
+  }
 
   await page.goto(preview.base, { waitUntil: 'networkidle' })
   await page.getByRole('button', { name: 'Überspringen' }).click({ timeout: 15000 })
@@ -187,6 +192,23 @@ try {
   if (!sheet.includes('CC BY-SA 4.0')) problems.push('[foto] Die Lizenz fehlt am Bild')
   if (!sheet.includes('Wikimedia Commons')) problems.push('[foto] Die Quelle wird nicht genannt')
   await page.screenshot({ path: `${OUT}/bauteil-foto.png` })
+
+  // --- Auch ein hinterlegtes Bauteil bekommt die Vertiefung mit Kostenrahmen ---
+  // Ein Teil, das die App kennt, darf nicht schlechter erklärt werden als eines,
+  // das der Nutzer selbst eingetippt hat.
+  await page.getByRole('button', { name: /Für mein Fahrzeug/ }).click()
+  await page.waitForTimeout(2000)
+  const vertieft = await sheetText()
+  if (!/225\s*€/.test(vertieft) || !/285\s*€/.test(vertieft)) {
+    problems.push('[vertiefung] Das hinterlegte Bauteil bekommt keinen Kostenrahmen')
+  }
+  if (!vertieft.includes('Brummen, das mit der Geschwindigkeit steigt')) {
+    problems.push('[vertiefung] Die Symptome der KI fehlen beim hinterlegten Bauteil')
+  }
+  if (!vertieft.includes('Nachfragen')) {
+    problems.push('[vertiefung] Die freie Nachfrage wird nicht angeboten')
+  }
+  await page.screenshot({ path: `${OUT}/bauteil-vertieft.png` })
   // "Fertig" im Sheet-Kopf. Die Fläche mit aria-label "Schließen" liegt hinter
   // dem Sheet – ein Klick darauf trifft in Playwright das Sheet selbst.
   await page.getByRole('button', { name: 'Fertig' }).click()
@@ -237,11 +259,6 @@ try {
   // --- Sprung ins Modell: /manual?teil=<id> öffnet Zone, Bauteil und Sheet ---
   await goto('#/manual?teil=exhaust')
   await page.waitForTimeout(900)
-  // Am Sheet selbst prüfen: der Text des Bauteils steht auch in der Liste darunter
-  const sheetText = async () => {
-    const sheet = page.locator('.anim-sheet')
-    return (await sheet.count()) ? sheet.first().innerText() : ''
-  }
   const sprung = await sheetText()
   if (!sprung.includes('Abgasanlage')) {
     problems.push(`[sprung] /manual?teil=exhaust öffnet das Bauteil nicht (Sheet: ${sprung.slice(0, 40)})`)
