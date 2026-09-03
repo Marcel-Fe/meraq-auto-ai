@@ -84,12 +84,27 @@ export function sumOfPositions(positions: Pick<InvoicePosition, 'priceEur'>[]): 
   return positions.reduce((sum, p) => sum + (positive(p.priceEur) ?? 0), 0)
 }
 
-/** Deckt sich die Summe der erklärten Zeilen mit der Endsumme des Belegs? */
-export function coversTotal(positions: Pick<InvoicePosition, 'priceEur'>[], totalGrossEur?: number): boolean {
+/**
+ * Deckt die Erklärung die ganze Rechnung ab?
+ *
+ * Die Unterscheidung ist wichtig, weil der Nutzer sonst die falsche Sache
+ * korrigiert: Fehlen die **Beträge** zu den Zeilen, nützt es nichts, den Rest
+ * der Rechnung nachzufotografieren – dann muss das Foto schärfer sein.
+ */
+export type CoverageState = 'vollständig' | 'wenige Beträge' | 'unvollständig'
+
+export function coverageOf(
+  positions: Pick<InvoicePosition, 'priceEur'>[],
+  totalGrossEur?: number,
+): CoverageState {
   const total = positive(totalGrossEur)
-  const sum = sumOfPositions(positions)
-  if (!total || sum === 0) return true
+  if (!total || positions.length === 0) return 'vollständig'
+
+  const priced = positions.filter((p) => positive(p.priceEur)).length
+  if (priced === 0 || priced * 2 < positions.length) return 'wenige Beträge'
+
   // Netto-Positionen unter einer Brutto-Endsumme sind der Normalfall (19 % MwSt.),
   // deshalb ist die Spanne nach unten weiter als nach oben
-  return sum >= total * 0.75 && sum <= total * 1.1
+  const sum = sumOfPositions(positions)
+  return sum >= total * 0.75 && sum <= total * 1.1 ? 'vollständig' : 'unvollständig'
 }

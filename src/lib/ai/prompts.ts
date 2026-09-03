@@ -117,8 +117,10 @@ Für jede Position:
 - "zone": in welchem Bereich das liegt – "engine" für Motorraum und Antrieb, "chassis" für
   Fahrwerk, Räder, Bremsen und Abgasanlage, "interior" für Innenraum. Nur setzen, wenn Du
   Dir sicher bist.
-- "priceEur": der Betrag dieser Zeile, wenn er lesbar ist – brutto, wenn die Rechnung brutto
-  ausweist. Nicht rechnen, nicht schätzen, im Zweifel weglassen.
+- "priceEur": der Betrag dieser Zeile. Er steht in der letzten Spalte der Zeile – lies ihn für
+  **jede** Position mit, nicht nur für die erste. Ohne die Beträge kann die App nichts
+  einordnen, und dem Nutzer fehlt genau die Zahl, wegen der er die Rechnung scannt.
+  Nicht rechnen und nicht schätzen: Ist eine Zahl wirklich unlesbar, lass das Feld weg.
 - "kind" und "necessity": Einordnung der Position. "unklar" ist eine erlaubte und oft die
   ehrlichste Antwort.
 - "jobId": nur setzen, wenn die Position eindeutig einer der angebotenen Werkstattpositionen

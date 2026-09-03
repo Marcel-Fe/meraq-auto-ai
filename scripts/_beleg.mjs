@@ -22,12 +22,13 @@ td{border-bottom:1px solid #ddd;padding:7px 4px} .r{text-align:right}
 <tr><td>2</td><td>Bremsbeläge Vorderachse erneuert, inkl. Reinigung der Führungen</td><td class="r">289,90 €</td></tr>
 <tr><td>3</td><td>Innenraumfilter (Aktivkohle) gewechselt</td><td class="r">48,00 €</td></tr>
 <tr><td>4</td><td>Bremsflüssigkeit gewechselt (DOT 4)</td><td class="r">89,00 €</td></tr>
-<tr><td>5</td><td>Kleinteile, Reiniger, Altölentsorgung</td><td class="r">24,50 €</td></tr>
+<tr><td>5</td><td>Querlenker vorne links ersetzt, Achsvermessung durchgeführt</td><td class="r">412,00 €</td></tr>
+<tr><td>6</td><td>Kleinteile, Reiniger, Altölentsorgung</td><td class="r">24,50 €</td></tr>
 </table>
 <table class="summe">
-<tr><td class="r" style="width:80%">Zwischensumme netto</td><td class="r">619,90 €</td></tr>
-<tr><td class="r">zzgl. 19 % MwSt.</td><td class="r">117,78 €</td></tr>
-<tr><td class="r"><b>Rechnungsbetrag brutto</b></td><td class="r"><b>737,68 €</b></td></tr>
+<tr><td class="r" style="width:80%">Zwischensumme netto</td><td class="r">1.031,90 €</td></tr>
+<tr><td class="r">zzgl. 19 % MwSt.</td><td class="r">196,06 €</td></tr>
+<tr><td class="r"><b>Rechnungsbetrag brutto</b></td><td class="r"><b>1.227,96 €</b></td></tr>
 </table>
 <div class="klein" style="margin-top:20px">Zahlbar sofort ohne Abzug. Für die ausgeführten Arbeiten gilt die gesetzliche Gewährleistung.</div>`
 const b = await chromium.launch()

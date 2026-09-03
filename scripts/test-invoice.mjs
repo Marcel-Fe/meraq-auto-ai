@@ -8,7 +8,7 @@
  *
  * Aufruf: npm run test:invoice
  */
-import { coversTotal, positionPriceCheck, sumOfPositions } from '../src/lib/invoiceCheck.ts'
+import { coverageOf, positionPriceCheck, sumOfPositions } from '../src/lib/invoiceCheck.ts'
 import { sanitizeInvoice } from '../src/lib/invoiceExplain.ts'
 import { findHotspotId } from '../src/data/manual.ts'
 import { repairJobsFor } from '../src/data/parts.ts'
@@ -80,10 +80,24 @@ console.log('Deckt die Erklärung die ganze Rechnung ab?')
 {
   const zeilen = [{ priceEur: 120 }, { priceEur: 80 }, { priceEur: 40 }]
   check('Summe der Zeilen', sumOfPositions(zeilen) === 240)
-  check('Netto-Zeilen unter Brutto-Endsumme gelten als vollständig', coversTotal(zeilen, 285))
-  check('Fehlt die halbe Rechnung, fällt es auf', !coversTotal(zeilen, 600))
-  check('Ohne Endsumme keine Warnung', coversTotal(zeilen, undefined))
-  check('Ohne Beträge keine Warnung', coversTotal([{}, {}], 400))
+  check('Netto-Zeilen unter Brutto-Endsumme gelten als vollständig', coverageOf(zeilen, 285) === 'vollständig')
+  check('Fehlt die halbe Rechnung, fällt es auf', coverageOf(zeilen, 600) === 'unvollständig')
+  check('Ohne Endsumme keine Warnung', coverageOf(zeilen, undefined) === 'vollständig')
+  // Der Unterschied zaehlt: Wer den Rest nachfotografiert, obwohl nur die
+  // Betraege unlesbar waren, korrigiert die falsche Sache
+  check(
+    'Ohne gelesene Beträge ist das kein fehlender Rechnungsteil',
+    coverageOf([{}, {}, {}], 400) === 'wenige Beträge',
+    coverageOf([{}, {}, {}], 400),
+  )
+  check(
+    'Ein Betrag unter sechs Zeilen ist zu wenig',
+    coverageOf([{ priceEur: 100 }, {}, {}, {}, {}, {}], 400) === 'wenige Beträge',
+  )
+  check(
+    'Zwei von drei Beträgen reichen für die Prüfung',
+    coverageOf([{ priceEur: 150 }, { priceEur: 130 }, {}], 300) === 'vollständig',
+  )
 }
 
 console.log('Bereinigung der KI-Antwort')

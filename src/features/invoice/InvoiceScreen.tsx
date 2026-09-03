@@ -18,7 +18,7 @@ import { repairJobsFor } from '../../data/parts'
 import { describeAiError, hasApiKey } from '../../lib/ai/client'
 import { fileToDataUrl } from '../../lib/fileStore'
 import { formatDate, formatEur, formatKm, todayIso } from '../../lib/format'
-import { coversTotal } from '../../lib/invoiceCheck'
+import { coverageOf } from '../../lib/invoiceCheck'
 import { explainInvoice } from '../../lib/invoiceExplain'
 import { useActiveVehicle, useAppStore, useVehicleMaintenance } from '../../store/useAppStore'
 import type { InvoiceExplanation } from '../../types'
@@ -132,7 +132,7 @@ export default function InvoiceScreen() {
 
   if (!vehicle) return null
 
-  const complete = result ? coversTotal(result.positions, result.totalGrossEur) : true
+  const coverage = result ? coverageOf(result.positions, result.totalGrossEur) : 'vollständig'
 
   return (
     <Page>
@@ -253,10 +253,16 @@ export default function InvoiceScreen() {
                 </p>
               )}
               <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">{result.summary}</p>
-              {!complete && (
+              {coverage === 'unvollständig' && (
                 <p className="mt-2.5 text-[12px] leading-relaxed text-warn">
                   Die erklärten Zeilen ergeben nicht die Endsumme – vermutlich ist ein Teil der
                   Rechnung nicht auf dem Bild. Fotografiere den Rest nach.
+                </p>
+              )}
+              {coverage === 'wenige Beträge' && (
+                <p className="mt-2.5 text-[12px] leading-relaxed text-warn">
+                  Zu den meisten Zeilen war kein Betrag lesbar – deshalb fehlt dort die
+                  Preis-Einordnung. Ein schärferes Foto der Beträge hilft.
                 </p>
               )}
             </Card>

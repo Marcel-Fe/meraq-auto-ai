@@ -8,6 +8,12 @@ const errs = []
 page.on('pageerror', (e) => errs.push(e.message.slice(0, 200)))
 await page.goto('https://marcel-fe.github.io/meraq-auto-ai/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(1200)
+await page.evaluate(async () => {
+  for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister()
+  for (const k of await caches.keys()) await caches.delete(k)
+})
+await page.reload({ waitUntil: 'networkidle' })
+await page.waitForTimeout(1500)
 await page.evaluate(() => (window.location.hash = '#/invoice'))
 await page.waitForTimeout(1000)
 await page.setInputFiles('input[aria-label="Rechnungsbild wählen"]', 'screenshots/einrichtung/testbeleg.png')
