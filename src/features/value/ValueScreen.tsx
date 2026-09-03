@@ -1,10 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Calculator, Info, TrendingDown, TrendingUp } from 'lucide-react'
+import { Calculator, Info, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Card, EstimateNote, SectionTitle, Segmented, cn } from '../../components/ui'
-import { useActiveVehicle } from '../../store/useAppStore'
+import {
+  useActiveVehicle,
+  useAppStore,
+  useVehicleActivities,
+  useVehicleDiagnoses,
+  useVehicleDocuments,
+  useVehicleMaintenance,
+} from '../../store/useAppStore'
+import { repairJobsFor } from '../../data/parts'
 import { valuate, valueHistory } from '../../lib/valuation'
+import { sellingFloor } from '../../lib/sellingPrice'
 import { formatEur, formatMonth, formatNumber } from '../../lib/format'
 
 const RANGES = [
@@ -16,6 +25,11 @@ const RANGES = [
 
 export default function ValueScreen() {
   const vehicle = useActiveVehicle()
+  const maintenance = useVehicleMaintenance()
+  const activities = useVehicleActivities()
+  const diagnoses = useVehicleDiagnoses()
+  const documents = useVehicleDocuments()
+  const hourlyRateEur = useAppStore((s) => s.settings.hourlyRateEur)
   const [range, setRange] = useState<(typeof RANGES)[number]['value']>('12')
 
   const valuation = useMemo(() => (vehicle ? valuate(vehicle) : null), [vehicle])
@@ -24,7 +38,25 @@ export default function ValueScreen() {
     [vehicle, range],
   )
 
-  if (!vehicle || !valuation) return null
+  // Der wirkliche Zustand: überfällige Wartung, offene Fehlercodes, HU, Belege.
+  // Alles davon liegt schon im Store – die Bewertung selbst bleibt unberührt.
+  const floor = useMemo(
+    () =>
+      vehicle && valuation
+        ? sellingFloor(vehicle, {
+            maintenance,
+            activities,
+            diagnoses,
+            documents,
+            jobs: repairJobsFor(vehicle),
+            hourlyRateEur,
+            valuation,
+          })
+        : null,
+    [vehicle, valuation, maintenance, activities, diagnoses, documents, hourlyRateEur],
+  )
+
+  if (!vehicle || !valuation || !floor) return null
 
   const first = history[0]?.value ?? 0
   const last = history[history.length - 1]?.value ?? 0
@@ -142,6 +174,106 @@ export default function ValueScreen() {
             ))}
           </div>
         </section>
+
+        <section>
+          <SectionTitle title="Deine Preisuntergrenze" />
+          <Card>
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ok/15 text-ok">
+                <ShieldCheck size={19} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[12px] text-ink-faint">Darunter gibst Du es unter Wert weg</p>
+                <p className="tnum mt-0.5 text-[30px] leading-none font-bold text-ok">
+                  {formatEur(floor.floor)}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 rounded-xl bg-white/4 px-3 py-2.5 text-[12.5px] leading-relaxed text-ink-muted">
+              „{floor.sentence}“
+            </p>
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <div className="rounded-[16px] bg-white/4 p-3">
+                <p className="text-[11.5px] text-ink-faint">So inserieren</p>
+                <p className="tnum mt-1 text-[18px] font-bold">{formatEur(floor.askingPrice)}</p>
+                <p className="mt-1 text-[10.5px] leading-snug text-ink-faint">mit Luft zum Verhandeln</p>
+              </div>
+              <div className="rounded-[16px] bg-white/4 p-3">
+                <p className="text-[11.5px] text-ink-faint">Realistisch privat</p>
+                <p className="tnum mt-1 text-[18px] font-bold">{formatEur(floor.adjustedPrivate)}</p>
+                <p className="mt-1 text-[10.5px] leading-snug text-ink-faint">
+                  {floor.adjustmentsTotal === 0
+                    ? 'ohne Zu- und Abschläge'
+                    : 'nach den Zu- und Abschlägen unten'}
+                </p>
+              </div>
+            </div>
+
+            <p className="tnum mt-3 border-t border-white/8 pt-3 text-[11.5px] leading-relaxed text-ink-faint">
+              {floor.formula}
+            </p>
+          </Card>
+        </section>
+
+        {floor.adjustments.length > 0 && (
+          <section>
+            <SectionTitle title="Was den Preis wirklich bewegt" />
+            <Card>
+              <div className="space-y-3.5">
+                {floor.adjustments.map((a) => (
+                  <div key={a.id} className="border-b border-white/6 pb-3.5 last:border-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block text-[13.5px] font-medium">{a.label}</span>
+                        <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-faint">
+                          {a.reason}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          'tnum shrink-0 text-[14px] font-semibold',
+                          a.amountEur >= 0 ? 'text-ok' : 'text-warn',
+                        )}
+                      >
+                        {a.amountEur >= 0 ? '+' : '−'} {formatEur(Math.abs(a.amountEur))}
+                      </span>
+                    </div>
+                    <p className="tnum mt-1.5 text-[11px] leading-snug text-ink-faint">{a.formula}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-3">
+                <span className="text-[14px] font-semibold">Zusammen</span>
+                <span
+                  className={cn(
+                    'tnum text-[16px] font-bold',
+                    floor.adjustmentsTotal >= 0 ? 'text-ok' : 'text-warn',
+                  )}
+                >
+                  {floor.adjustmentsTotal >= 0 ? '+' : '−'}{' '}
+                  {formatEur(Math.abs(floor.adjustmentsTotal))}
+                </span>
+              </div>
+
+              {floor.capped && (
+                <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+                  Die Summe ist begrenzt: Auch mit vielen offenen Punkten bleibt ein Fahrzeug
+                  mindestens 45 % seines Papierwerts wert. Wer alles davon abzieht, rechnet sich
+                  ein fahrbereites Auto schön.
+                </p>
+              )}
+            </Card>
+
+            <EstimateNote>
+              Diese Posten kommen aus Deinen eigenen Daten – Wartungsplan, Fehlerspeicher,
+              HU-Termin und Belegen im Verlauf. Was keine passende Werkstattposition hat, taucht
+              hier bewusst nicht auf: eine geratene Zahl wäre schlechter als keine.
+            </EstimateNote>
+          </section>
+        )}
 
         <section>
           <SectionTitle title="Restwert-Prognose" />

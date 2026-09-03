@@ -26,6 +26,7 @@
     "test:3d": "node scripts/shot-3d.mjs",
     "test:calc": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-calc.mjs",
     "test:ics": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-ics.mjs",
+    "test:value": "node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/test-value.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

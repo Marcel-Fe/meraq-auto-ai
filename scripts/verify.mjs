@@ -17,6 +17,7 @@ import { startPreview } from './preview-server.mjs'
 const PURE = [
   ['Rechenkerne', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-calc.mjs']],
   ['Kalender-Datei', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-ics.mjs']],
+  ['Verkaufswert', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-value.mjs']],
   ['Kostenrahmen', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-part-cost.mjs']],
   ['Anleitungs-Vergleich', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-guide-cost.mjs']],
   ['Rechnungspruefung', ['--experimental-strip-types', '--import', './scripts/ts-resolve.mjs', 'scripts/test-invoice.mjs']],
