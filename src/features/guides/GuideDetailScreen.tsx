@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom'
 import { Check, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
 import { Badge, Button, Card, ProgressBar, SectionTitle, cn } from '../../components/ui'
-import { Markdown } from '../../components/Markdown'
 import { GUIDES } from '../../data/guides'
-import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
-import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
+import { describeAiError, hasApiKey } from '../../lib/ai/client'
+import { adaptGuide, cachedAdaptation } from '../../lib/guideAdapt'
+import type { GuideAdaptation } from '../../types'
 import { useActiveVehicle, useAppStore, useGuideProgress } from '../../store/useAppStore'
+import { GuideAdaptationView } from './GuideAdaptationView'
 
 const DIFFICULTY_TONE = { einfach: 'ok', mittel: 'warn', schwer: 'danger' } as const
 
@@ -21,7 +22,11 @@ export default function GuideDetailScreen() {
   const toggleGuideStep = useAppStore((s) => s.toggleGuideStep)
   const resetGuideProgress = useAppStore((s) => s.resetGuideProgress)
   const done = useMemo(() => new Set(steps), [steps])
-  const [answer, setAnswer] = useState('')
+  // Schon in dieser Sitzung geholt? Dann sofort zeigen, statt erneut zu fragen
+  const [adapt, setAdapt] = useState<GuideAdaptation | null>(() =>
+    vehicle && guide ? (cachedAdaptation(guide, vehicle) ?? null) : null,
+  )
+  const [adaptError, setAdaptError] = useState('')
   const [loading, setLoading] = useState(false)
 
   if (!guide) {
@@ -39,35 +44,33 @@ export default function GuideDetailScreen() {
     if (vehicle) toggleGuideStep(vehicle.id, guide.id, i)
   }
 
+  /**
+   * Die Anleitung gilt für jedes Fahrzeug – die Abweichungen kennt nur die KI.
+   * Die Antwort kommt strukturiert zurück, damit der Hinweis zu Schritt 4 auch
+   * bei Schritt 4 steht und nicht in einem Absatz darüber.
+   */
   const askForVehicle = async () => {
+    if (!vehicle) return
     if (!hasApiKey()) {
-      setAnswer('_Für die KI-Antwort brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen)._')
+      setAdaptError(
+        'Für die KI-Antwort brauchst Du einen KI-Schlüssel – bei Google gibt es ihn kostenlos (Einstellungen).',
+      )
       return
     }
+    setAdaptError('')
     setLoading(true)
-    setAnswer('')
-    let acc = ''
     try {
-      await askAi({
-        system: SYSTEM_ASSISTANT,
-        context: vehicleContext(vehicle),
-        messages: [
-          {
-            role: 'user',
-            content: `Ich möchte "${guide.title}" an meinem Fahrzeug selbst machen. Was ist bei genau diesem Modell zu beachten? Nenne Besonderheiten, benötigtes Spezialwerkzeug und typische Stolperfallen.`,
-          },
-        ],
-        onText: (d) => {
-          acc += d
-          setAnswer(acc)
-        },
-      })
+      setAdapt(await adaptGuide(guide, vehicle))
     } catch (err) {
-      setAnswer(describeAiError(err))
+      setAdaptError(describeAiError(err))
     } finally {
       setLoading(false)
     }
   }
+
+  const noteForStep = (i: number) => adapt?.stepNotes?.find((n) => n.step === i + 1)?.note
+
+  const vehicleLabel = vehicle ? `Deinem ${vehicle.make} ${vehicle.model}` : 'Deinem Fahrzeug'
 
   return (
     <Page>
@@ -137,6 +140,27 @@ export default function GuideDetailScreen() {
           )}
         </div>
 
+        {/* Erst die Abweichungen an diesem Fahrzeug, dann die Schritte – die
+            Hinweise stehen anschließend direkt an dem Schritt, zu dem sie gehören */}
+        {adapt ? (
+          <GuideAdaptationView adapt={adapt} vehicleLabel={vehicleLabel} />
+        ) : (
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              full
+              loading={loading}
+              icon={<Sparkles size={17} />}
+              onClick={askForVehicle}
+            >
+              Was gilt für mein Fahrzeug?
+            </Button>
+            {adaptError && (
+              <p className="text-[12.5px] leading-relaxed text-danger">{adaptError}</p>
+            )}
+          </div>
+        )}
+
         <section>
           <SectionTitle
             title="Schritt für Schritt"
@@ -167,6 +191,7 @@ export default function GuideDetailScreen() {
           <div className="space-y-2.5">
             {guide.steps.map((s, i) => {
               const isDone = done.has(i)
+              const note = noteForStep(i)
               return (
                 <button
                   key={i}
@@ -199,31 +224,20 @@ export default function GuideDetailScreen() {
                     <span className="mt-1 block text-[13px] leading-relaxed text-ink-muted">
                       {s.text}
                     </span>
+                    {note && (
+                      <span className="mt-2.5 flex items-start gap-2 rounded-[12px] border border-brand-violet/25 bg-brand-violet/8 px-2.5 py-2">
+                        <Sparkles size={13} className="mt-0.5 shrink-0 text-brand-violet" />
+                        <span className="block text-[12.5px] leading-relaxed text-ink-muted">
+                          {note}
+                        </span>
+                      </span>
+                    )}
                   </span>
                 </button>
               )
             })}
           </div>
         </section>
-
-        {answer ? (
-          <Card>
-            <div className="mb-2 flex items-center gap-2">
-              <Sparkles size={15} className="text-brand-violet" />
-              <span className="text-[13px] font-semibold">
-                Besonderheiten bei {vehicle ? `${vehicle.make} ${vehicle.model}` : 'Deinem Fahrzeug'}
-              </span>
-            </div>
-            <div className="text-[14px] text-ink-muted">
-              <Markdown text={answer} />
-              {loading && <span className="inline-block animate-pulse">▍</span>}
-            </div>
-          </Card>
-        ) : (
-          <Button variant="outline" full loading={loading} icon={<Sparkles size={17} />} onClick={askForVehicle}>
-            Was gilt für mein Fahrzeug?
-          </Button>
-        )}
       </div>
     </Page>
   )
