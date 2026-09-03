@@ -437,6 +437,34 @@ export interface InvoiceExplanation {
 }
 
 /**
+ * Die zweite Meinung zum Marktwert – eine Einschätzung, keine Marktabfrage.
+ *
+ * Die eigene Rechnung (`valuate()`) kennt Neupreis, Alter, Laufleistung und
+ * Zustand. Was sie nicht kennt: wie gefragt genau diese Baureihe gerade ist,
+ * welche Ausstattung den Preis hebt und wie lange ein Verkauf dauert. Genau
+ * das steht hier – erkennbar als Einschätzung und immer neben der eigenen
+ * Zahl, nie an ihrer Stelle.
+ */
+export interface MarketOpinion {
+  /** Wie gut kennt die KI diese Baureihe? Ehrlich, nicht hilfsbereit. */
+  certainty: 'gut bekannt' | 'teilweise bekannt' | 'kaum bekannt'
+  /** Realistische Spanne beim Privatverkauf in Deutschland */
+  privateMinEur?: number
+  privateMaxEur?: number
+  /** Was den Preis bei genau diesem Modell hebt */
+  priceUp: string[]
+  /** Was ihn drückt */
+  priceDown: string[]
+  demand: 'hoch' | 'normal' | 'gering'
+  demandNote?: string
+  /** Wie lange ein Verkauf üblicherweise dauert, in Alltagssprache */
+  timeToSell?: string
+  /** Wo sich dieses Fahrzeug am besten verkauft */
+  bestChannel?: string
+  note?: string
+}
+
+/**
  * Frei lizenziertes Foto eines Bauteils aus Wikimedia Commons.
  * Urheber und Lizenz gehören zur Nutzungsbedingung und werden im UI angezeigt.
  */

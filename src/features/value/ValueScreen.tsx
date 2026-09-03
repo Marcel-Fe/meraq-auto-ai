@@ -14,6 +14,7 @@ import {
 import { repairJobsFor } from '../../data/parts'
 import { valuate, valueHistory } from '../../lib/valuation'
 import { sellingFloor } from '../../lib/sellingPrice'
+import MarketOpinionSection from './MarketOpinion'
 import { formatEur, formatMonth, formatNumber } from '../../lib/format'
 
 const RANGES = [
@@ -286,6 +287,11 @@ export default function ValueScreen() {
             </div>
             <p className="tnum text-[22px] font-bold">{formatEur(valuation.residualIn3Years)}</p>
           </Card>
+        </section>
+
+        <section>
+          <SectionTitle title="Zweite Meinung" />
+          <MarketOpinionSection vehicle={vehicle} ownPrivateSale={valuation.privateSale} />
         </section>
 
         <section>

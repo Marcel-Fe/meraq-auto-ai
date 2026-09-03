@@ -14,6 +14,7 @@
  * Aufruf: npm run test:value
  */
 import { sellingChecklist, sellingFloor, valueAdjustments } from '../src/lib/sellingPrice.ts'
+import { compareToOwn, sanitizeMarketOpinion } from '../src/lib/marketValue.ts'
 import { valuate } from '../src/lib/valuation.ts'
 import { repairJobsFor } from '../src/data/parts.ts'
 
@@ -334,6 +335,69 @@ console.log('\nDer Verkaufs-Check')
   const leer = sellingChecklist(golf)
   check('ohne Kontext nur die Lücken', leer.every((p) => p.kind === 'missing') && leer.length >= 3, JSON.stringify(leer.map((p) => p.id)))
   check('ohne HU-Termin wird das benannt', leer.some((p) => p.id === 'missing-hu'))
+}
+
+console.log('\nZweite Meinung: Bereinigung der KI-Antwort')
+{
+  const roh = (patch = {}) => ({
+    certainty: 'gut bekannt',
+    privateMinEur: 9000,
+    privateMaxEur: 11000,
+    priceUp: ['  Automatik ist gefragt  ', '', '   '],
+    priceDown: ['Bekannte Steuerkettenprobleme'],
+    demand: 'hoch',
+    ...patch,
+  })
+
+  const sauber = sanitizeMarketOpinion(roh(), 10000)
+  check('Spanne bleibt stehen', sauber.privateMinEur === 9000 && sauber.privateMaxEur === 11000)
+  check('leere Punkte fliegen raus', sauber.priceUp.length === 1, JSON.stringify(sauber.priceUp))
+  check('Leerraum wird entfernt', sauber.priceUp[0] === 'Automatik ist gefragt')
+
+  const gedreht = sanitizeMarketOpinion(roh({ privateMinEur: 11000, privateMaxEur: 9000 }), 10000)
+  check('vertauschte Grenzen werden gedreht', gedreht.privateMinEur === 9000 && gedreht.privateMaxEur === 11000)
+
+  const halb = sanitizeMarketOpinion(roh({ privateMaxEur: undefined }), 10000)
+  check('eine einzelne Grenze ist keine Spanne', halb.privateMinEur === undefined)
+
+  const unsinn = sanitizeMarketOpinion(roh({ privateMinEur: 90000, privateMaxEur: 110000 }), 10000)
+  check('Spanne um den Faktor 10 daneben fliegt raus', unsinn.privateMinEur === undefined, `${unsinn.privateMinEur}`)
+  check('und der Grund steht im Hinweis', (unsinn.note ?? '').includes('weggelassen'), unsinn.note)
+
+  const abweichend = sanitizeMarketOpinion(roh({ privateMinEur: 13000, privateMaxEur: 15000 }), 10000)
+  check('eine abweichende, aber mögliche Spanne bleibt', abweichend.privateMinEur === 13000)
+
+  const kaputt = sanitizeMarketOpinion(
+    { certainty: 'sehr sicher', demand: 'riesig', privateMinEur: -5, priceUp: null, priceDown: undefined },
+    10000,
+  )
+  check('unbekannte Sicherheit wird abgefangen', kaputt.certainty === 'teilweise bekannt', kaputt.certainty)
+  check('unbekannte Nachfrage wird abgefangen', kaputt.demand === 'normal', kaputt.demand)
+  check('negative Preise fliegen raus', kaputt.privateMinEur === undefined)
+  check('fehlende Listen werden zu leeren Listen', kaputt.priceUp.length === 0 && kaputt.priceDown.length === 0)
+}
+
+console.log('\nZweite Meinung: Vergleich mit der eigenen Rechnung')
+{
+  const meinung = (min, max) => ({ certainty: 'gut bekannt', privateMinEur: min, privateMaxEur: max, priceUp: [], priceDown: [], demand: 'normal' })
+
+  const deckung = compareToOwn(10000, meinung(9000, 11000))
+  check('eigene Zahl in der Spanne = deckt sich', deckung.state === 'deckt sich', deckung.state)
+  check('Mitte wird genannt', deckung.midEur === 10000, `${deckung.midEur}`)
+
+  const hoeher = compareToOwn(10000, meinung(12000, 14000))
+  check('KI über der Rechnung wird benannt', hoeher.state === 'KI höher', hoeher.state)
+  check('Abweichung in Prozent stimmt', hoeher.deltaPct === 30, `${hoeher.deltaPct}`)
+  check('der Unterschied wird erklärt, nicht versteckt', hoeher.text.includes('30 %'), hoeher.text)
+  check('die Untergrenze bleibt die gerechnete', hoeher.text.includes('Untergrenze'))
+
+  const niedriger = compareToOwn(10000, meinung(6000, 8000))
+  check('KI unter der Rechnung wird benannt', niedriger.state === 'KI niedriger', niedriger.state)
+  check('Abweichung ist negativ', niedriger.deltaPct === -30, `${niedriger.deltaPct}`)
+
+  const ohne = compareToOwn(10000, meinung(undefined, undefined))
+  check('ohne Spanne kein Vergleich', ohne.state === 'ohne Spanne')
+  check('und die eigene Rechnung bleibt stehen', ohne.text.includes('eigene'), ohne.text)
 }
 
 if (problems.length) {
