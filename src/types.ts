@@ -236,6 +236,37 @@ export interface Guide {
   parts: string[]
   safety?: string
   steps: { title: string; text: string }[]
+  /**
+   * Vergleichbare Werkstattposition aus `repairJobsFor()` – Grundlage für
+   * „selbst machen oder machen lassen". Nur setzen, wenn die Position wirklich
+   * dieselbe Arbeit beschreibt; ein schiefer Vergleich ist schlimmer als keiner.
+   */
+  jobId?: string
+  /** Wartungsart, die diese Arbeit erledigt – für den Eintrag in den Wartungsplan */
+  maintenanceKind?: MaintenanceKind
+}
+
+/**
+ * Was an einer allgemeingültigen Anleitung beim Fahrzeug des Nutzers anders ist.
+ *
+ * Strukturiert statt Fließtext, damit der Hinweis neben dem Schritt stehen kann,
+ * an dem der Nutzer gerade steht. Drehmomente und Füllmengen bleiben bewusst
+ * draußen – die stehen im Herstellerhandbuch.
+ */
+export interface GuideAdaptation {
+  /** Passt die Anleitung an diesem Fahrzeug überhaupt? */
+  fits: boolean
+  summary: string
+  /** Hinweise mit Bezug auf die Schrittnummer (1-basiert wie in der Anzeige) */
+  stepNotes?: { step: number; note: string }[]
+  specialTools?: string[]
+  /** Realistische Dauer für Ungeübte in Minuten */
+  timeNoviceMin?: number
+  pitfalls?: string[]
+  /** Rät die KI bei genau diesem Fahrzeug von der Eigenarbeit ab? */
+  recommendWorkshop?: boolean
+  workshopReason?: string
+  note?: string
 }
 
 export type PartQuality = 'Originalteil' | 'OEM' | 'Aftermarket' | 'Gebraucht'

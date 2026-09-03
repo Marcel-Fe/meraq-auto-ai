@@ -51,6 +51,13 @@ interface AppState {
   activeThreadId: string | null
   /** Letzte Werkstattsuche – der Kartendienst ist zeitweise überlastet, dann steht wenigstens das da */
   workshopSearch: WorkshopSearch | null
+  /**
+   * Abgehakte Schritte je Fahrzeug und Anleitung, Schlüssel aus `guideKey()`.
+   * Gehört in den Store, weil die Arbeit am Fahrzeug länger dauert als eine
+   * Sitzung: Wer unter dem Auto liegt und die App wegwischt, will nicht wieder
+   * bei Schritt 1 anfangen.
+   */
+  guideProgress: Record<string, number[]>
   settings: Settings
 
   // Fahrzeuge
@@ -61,13 +68,18 @@ interface AppState {
   setMileage: (id: string, mileage: number) => void
 
   // Wartung
-  completeMaintenance: (itemId: string) => void
+  /** `detail` überschreibt den Zusatz im Verlauf – z. B. „selbst erledigt nach Anleitung" */
+  completeMaintenance: (itemId: string, detail?: string) => void
   updateMaintenance: (itemId: string, patch: Partial<MaintenanceItem>) => void
   addMaintenance: (item: Omit<MaintenanceItem, 'id' | 'custom'>) => void
   removeMaintenance: (itemId: string) => void
 
   // Aktivitäten
   addActivity: (a: Omit<ActivityEntry, 'id'>) => void
+
+  // Anleitungen
+  toggleGuideStep: (vehicleId: string, guideId: string, step: number) => void
+  resetGuideProgress: (vehicleId: string, guideId: string) => void
 
   // Diagnose
   addDiagnosis: (d: Omit<DiagnosisEntry, 'id'>) => string
@@ -119,8 +131,12 @@ function seedState() {
     threads: [] as ChatThread[],
     activeThreadId: null,
     workshopSearch: null as WorkshopSearch | null,
+    guideProgress: {} as Record<string, number[]>,
   }
 }
+
+/** Der Fortschritt hängt am Fahrzeug: derselbe Ölwechsel am Zweitwagen fängt neu an */
+const guideKey = (vehicleId: string, guideId: string) => `${vehicleId}|${guideId}`
 
 /**
  * Baut den Wartungsplan für ein Fahrzeug neu auf und übernimmt dabei, was der
@@ -225,6 +241,9 @@ export const useAppStore = create<AppState>()(
             documents: s.documents.filter((d) => d.vehicleId !== id),
             partScans: s.partScans.filter((p) => p.vehicleId !== id),
             quotes: s.quotes.filter((q) => q.vehicleId !== id),
+            guideProgress: Object.fromEntries(
+              Object.entries(s.guideProgress).filter(([key]) => !key.startsWith(`${id}|`)),
+            ),
           }
         }),
 
@@ -252,7 +271,7 @@ export const useAppStore = create<AppState>()(
         }))
       },
 
-      completeMaintenance: (itemId) => {
+      completeMaintenance: (itemId, detail) => {
         const { maintenance, vehicles, activeVehicleId } = get()
         const item = maintenance.find((m) => m.id === itemId)
         const vehicle = vehicles.find((v) => v.id === (item?.vehicleId ?? activeVehicleId))
@@ -267,7 +286,9 @@ export const useAppStore = create<AppState>()(
               vehicleId: vehicle.id,
               date: todayIso(),
               title: `${item.label} erledigt`,
-              detail: `bei ${vehicle.mileage.toLocaleString('de-DE')} km`,
+              detail: detail
+                ? `${detail} · bei ${vehicle.mileage.toLocaleString('de-DE')} km`
+                : `bei ${vehicle.mileage.toLocaleString('de-DE')} km`,
               icon: item.kind === 'oil' ? ('oil' as const) : ('repair' as const),
               mileage: vehicle.mileage,
             },
@@ -286,6 +307,27 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ maintenance: s.maintenance.filter((m) => m.id !== itemId) })),
 
       addActivity: (a) => set((s) => ({ activities: [{ ...a, id: uid() }, ...s.activities] })),
+
+      toggleGuideStep: (vehicleId, guideId, step) =>
+        set((s) => {
+          const key = guideKey(vehicleId, guideId)
+          const current = s.guideProgress[key] ?? []
+          const next = current.includes(step)
+            ? current.filter((i) => i !== step)
+            : [...current, step].sort((a, b) => a - b)
+          const progress = { ...s.guideProgress }
+          // Leere Einträge nicht behalten – sonst wächst der Speicher mit jedem Blick in eine Anleitung
+          if (next.length) progress[key] = next
+          else delete progress[key]
+          return { guideProgress: progress }
+        }),
+
+      resetGuideProgress: (vehicleId, guideId) =>
+        set((s) => {
+          const progress = { ...s.guideProgress }
+          delete progress[guideKey(vehicleId, guideId)]
+          return { guideProgress: progress }
+        }),
 
       addDiagnosis: (d) => {
         const entry: DiagnosisEntry = { ...d, id: uid() }
@@ -439,7 +481,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'meraq-auto-ai',
-      version: 8,
+      version: 9,
       migrate: (persisted, from) => {
         let state = persisted as AppState
         if (!state?.vehicles) return state
@@ -510,6 +552,11 @@ export const useAppStore = create<AppState>()(
           state = { ...state, workshopSearch: state.workshopSearch ?? null }
         }
 
+        // v8 → v9: Anleitungen merken sich die abgehakten Schritte
+        if (from < 9) {
+          state = { ...state, guideProgress: state.guideProgress ?? {} }
+        }
+
         return state
       },
       // Streamende Nachrichten nicht als "pending" speichern – sonst hängen sie nach Reload
@@ -560,6 +607,20 @@ export const useVehicleDiagnoses = () =>
 export const useVehicleDocuments = () =>
   useAppStore(
     useShallow((s) => s.documents.filter((d) => d.vehicleId === s.activeVehicleId).sort(byDateDesc)),
+  )
+
+/**
+ * Abgehakte Schritte einer Anleitung. Ohne Eintrag kommt immer dasselbe leere
+ * Array zurück – eine frische Referenz je Render würde React in eine Schleife
+ * schicken (Fehler #185).
+ */
+const NO_STEPS: number[] = []
+
+export const useGuideProgress = (vehicleId: string | undefined, guideId: string | undefined) =>
+  useAppStore(
+    useShallow((s) =>
+      vehicleId && guideId ? (s.guideProgress[`${vehicleId}|${guideId}`] ?? NO_STEPS) : NO_STEPS,
+    ),
   )
 
 export const useVehiclePartScans = () =>

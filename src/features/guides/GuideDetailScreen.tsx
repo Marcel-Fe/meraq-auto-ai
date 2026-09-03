@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Check, Clock, Package, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
+import { Check, Clock, Package, RotateCcw, ShieldAlert, Sparkles, Wrench } from 'lucide-react'
 import { Page, PageHeader } from '../../app/AppShell'
-import { Badge, Button, Card, SectionTitle, cn } from '../../components/ui'
+import { Badge, Button, Card, ProgressBar, SectionTitle, cn } from '../../components/ui'
 import { Markdown } from '../../components/Markdown'
 import { GUIDES } from '../../data/guides'
 import { askAi, describeAiError, hasApiKey } from '../../lib/ai/client'
 import { SYSTEM_ASSISTANT, vehicleContext } from '../../lib/ai/prompts'
-import { useActiveVehicle } from '../../store/useAppStore'
+import { useActiveVehicle, useAppStore, useGuideProgress } from '../../store/useAppStore'
 
 const DIFFICULTY_TONE = { einfach: 'ok', mittel: 'warn', schwer: 'danger' } as const
 
@@ -15,7 +15,12 @@ export default function GuideDetailScreen() {
   const { id } = useParams()
   const vehicle = useActiveVehicle()
   const guide = GUIDES.find((g) => g.id === id)
-  const [done, setDone] = useState<Set<number>>(new Set())
+  // Der Fortschritt liegt im Store, nicht in der Komponente: Wer unter dem Auto
+  // liegt und die App wegwischt, will nicht wieder bei Schritt 1 anfangen
+  const steps = useGuideProgress(vehicle?.id, guide?.id)
+  const toggleGuideStep = useAppStore((s) => s.toggleGuideStep)
+  const resetGuideProgress = useAppStore((s) => s.resetGuideProgress)
+  const done = useMemo(() => new Set(steps), [steps])
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,13 +35,9 @@ export default function GuideDetailScreen() {
     )
   }
 
-  const toggle = (i: number) =>
-    setDone((prev) => {
-      const next = new Set(prev)
-      if (next.has(i)) next.delete(i)
-      else next.add(i)
-      return next
-    })
+  const toggle = (i: number) => {
+    if (vehicle) toggleGuideStep(vehicle.id, guide.id, i)
+  }
 
   const askForVehicle = async () => {
     if (!hasApiKey()) {
@@ -137,7 +138,32 @@ export default function GuideDetailScreen() {
         </div>
 
         <section>
-          <SectionTitle title="Schritt für Schritt" action={`${done.size}/${guide.steps.length}`} />
+          <SectionTitle
+            title="Schritt für Schritt"
+            action={
+              done.size === guide.steps.length
+                ? 'alles erledigt'
+                : `Schritt ${done.size + 1} von ${guide.steps.length}`
+            }
+          />
+
+          {done.size > 0 && (
+            <div className="mb-3 flex items-center gap-3">
+              <ProgressBar
+                value={done.size / guide.steps.length}
+                tone={done.size === guide.steps.length ? 'ok' : 'warn'}
+              />
+              <button
+                type="button"
+                onClick={() => vehicle && resetGuideProgress(vehicle.id, guide.id)}
+                className="-my-2 flex h-11 shrink-0 items-center gap-1.5 px-1 text-[12.5px] font-medium text-ink-muted active:opacity-70"
+              >
+                <RotateCcw size={13} />
+                Zurücksetzen
+              </button>
+            </div>
+          )}
+
           <div className="space-y-2.5">
             {guide.steps.map((s, i) => {
               const isDone = done.has(i)
